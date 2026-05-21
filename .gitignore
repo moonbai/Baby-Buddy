@@ -1,0 +1,47 @@
+# Flutter/Dart specific
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+.dart_tool/
+
+# IntelliJ
+*.iml
+.idea/
+
+# VSCode
+.vscode/
+
+# Android
+android/.gradle/
+android/app/build/
+android/build/
+android/gradle/wrapper/gradle-wrapper.jar
+android/local.properties
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Podfile.lock
+
+# Temporary files
+*.log
+*.tmp
+*.bak
+
+# Environment files
+.env
+.env.*
+
+# macOS
+.DS_Store
+
+# Test coverage
+coverage/
+
+# Generated files
+*.g.dart
+*.freezed.dart

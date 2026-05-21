@@ -19,14 +19,6 @@ jobs:
           echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
       - name: Install dependencies
         run: flutter pub get
-      - name: Enable HTTP cleartext
-        run: |
-          mkdir -p android/app/src/main/res/xml
-          echo '<?xml version="1.0" encoding="utf-8"?>
-          <network-security-config>
-              <base-config cleartextTrafficPermitted="true" />
-          </network-security-config>' > android/app/src/main/res/xml/network_security_config.xml
-          sed -i 's/android:icon/android:usesCleartextTraffic="true" android:icon/' android/app/src/main/AndroidManifest.xml
       - name: Build Release APK
         run: flutter build apk --release
       - name: Upload APK

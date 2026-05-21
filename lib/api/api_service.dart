@@ -27,40 +27,60 @@ class ApiService {
   }
 
   static Future<List> getChildren() async {
-    final res = await dio.get('/api/children/');
-    return res.data;
+    try {
+      final res = await dio.get('/api/children/');
+      return res.data;
+    } catch (e) {
+      throw Exception('获取宝宝列表失败: $e');
+    }
   }
 
   static Future<List> getTimeline() async {
-    final res = await dio.get('/api/timeline/');
-    return res.data;
+    try {
+      final res = await dio.get('/api/timeline/');
+      return res.data;
+    } catch (e) {
+      throw Exception('获取时间线失败: $e');
+    }
   }
 
-  static Future addFeeding(int childId, String start, String end, String type, String method) async {
-    await dio.post('/api/feedings/', data: {
-      'child': childId,
-      'start': start,
-      'end': end,
-      'type': type,
-      'method': method,
-    });
+  static Future<void> addFeeding(int childId, String start, String end, String type, String method) async {
+    try {
+      await dio.post('/api/feedings/', data: {
+        'child': childId,
+        'start': start,
+        'end': end,
+        'type': type,
+        'method': method,
+      });
+    } catch (e) {
+      throw Exception('添加喂奶记录失败: $e');
+    }
   }
 
-  static Future addSleep(int childId, String start, String end) async {
-    await dio.post('/api/sleep/', data: {
-      'child': childId,
-      'start': start,
-      'end': end,
-    });
+  static Future<void> addSleep(int childId, String start, String end) async {
+    try {
+      await dio.post('/api/sleep/', data: {
+        'child': childId,
+        'start': start,
+        'end': end,
+      });
+    } catch (e) {
+      throw Exception('添加睡眠记录失败: $e');
+    }
   }
 
-  static Future addDiaper(int childId, String time, bool wet, bool solid) async {
-    await dio.post('/api/diapers/', data: {
-      'child': childId,
-      'time': time,
-      'wet': wet,
-      'solid': solid,
-    });
+  static Future<void> addDiaper(int childId, String time, bool wet, bool solid) async {
+    try {
+      await dio.post('/api/diapers/', data: {
+        'child': childId,
+        'time': time,
+        'wet': wet,
+        'solid': solid,
+      });
+    } catch (e) {
+      throw Exception('添加尿布记录失败: $e');
+    }
   }
 }
 
