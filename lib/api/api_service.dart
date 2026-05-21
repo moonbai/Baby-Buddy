@@ -7,7 +7,15 @@ class ApiService {
 
   static Future<void> init() async {
     _baseUrl = await Storage.getServerUrl();
-    dio = Dio(BaseOptions(baseUrl: _baseUrl ?? 'http://127.0.0.1:8000'));
+    final baseUrl = _baseUrl ?? 'http://127.0.0.1:8000';
+    dio = Dio(BaseOptions(
+      baseUrl: baseUrl,
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    ));
     final token = await Storage.getToken();
     if (token != null) {
       dio.interceptors.add(AuthInterceptor(token));
@@ -20,9 +28,24 @@ class ApiService {
         'username': user,
         'password': pass,
       });
-      return res.data['token'];
-    } catch (_) {
+      if (res.data != null && res.data['token'] != null) {
+        return res.data['token'];
+      }
       return null;
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout) {
+        throw Exception('连接超时，请检查服务器地址是否正确');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw Exception('无法连接到服务器，请检查服务器地址和网络');
+      } else if (e.response?.statusCode == 401) {
+        throw Exception('用户名或密码错误');
+      } else if (e.response?.statusCode == 404) {
+        throw Exception('服务器地址错误，找不到登录接口');
+      } else {
+        throw Exception('登录失败: ${e.message}');
+      }
+    } catch (e) {
+      throw Exception('登录失败: $e');
     }
   }
 
