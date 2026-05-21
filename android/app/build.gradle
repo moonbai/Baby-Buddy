@@ -8,7 +8,10 @@ if (localPropertiesFile.exists()) {
 
 def flutterRoot = localProperties.getProperty('flutter.sdk')
 if (flutterRoot == null) {
-    throw new GradleException("Flutter SDK not found. Define location with flutter.sdk in local.properties.")
+    flutterRoot = System.getenv("FLUTTER_ROOT")
+}
+if (flutterRoot == null) {
+    throw new GradleException("Flutter SDK not found. Define location with flutter.sdk in local.properties or FLUTTER_ROOT environment variable.")
 }
 
 def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
@@ -27,7 +30,7 @@ apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 android {
     namespace "com.babybuddy.babybuddy_app"
-    compileSdkVersion 34
+    compileSdkVersion 33
     ndkVersion flutter.ndkVersion
 
     compileOptions {
@@ -46,7 +49,7 @@ android {
     defaultConfig {
         applicationId "com.babybuddy.babybuddy_app"
         minSdkVersion 21
-        targetSdkVersion 34
+        targetSdkVersion 33
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }
