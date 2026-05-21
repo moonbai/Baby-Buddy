@@ -1,0 +1,33 @@
+name: Build Release APK
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: stable
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Enable HTTP cleartext
+        run: |
+          mkdir -p android/app/src/main/res/xml
+          echo '<?xml version="1.0" encoding="utf-8"?>
+          <network-security-config>
+              <base-config cleartextTrafficPermitted="true" />
+          </network-security-config>' > android/app/src/main/res/xml/network_security_config.xml
+          sed -i 's/android:icon/android:usesCleartextTraffic="true" android:icon/' android/app/src/main/AndroidManifest.xml
+      - name: Build Release APK
+        run: flutter build apk --release
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: BabyBuddy-APK
+          path: build/app/outputs/flutter-apk/app-release.apk
