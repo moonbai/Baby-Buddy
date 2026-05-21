@@ -50,7 +50,9 @@ class ApiService {
       },
       onError: (error, handler) {
         print('API Error: ${error.response?.statusCode} - ${error.message}');
-        print('Response data: ${error.response?.data}');
+        if (error.response?.data != null) {
+          print('Response data: ${error.response?.data}');
+        }
         return handler.next(error);
       },
     ));
@@ -221,40 +223,49 @@ class ApiService {
 
   static Future<void> addFeeding(int childId, String start, String end, String type, String method) async {
     try {
-      await dio.post('/api/feedings/', data: {
+      final data = <String, dynamic>{
         'child': childId,
         'start': start,
         'end': end,
         'type': type,
         'method': method,
-      });
+      };
+      print('添加喂奶记录: $data');
+      await dio.post('/api/feedings/', data: data);
     } catch (e) {
+      print('添加喂奶记录失败: $e');
       throw Exception('添加喂奶记录失败: $e');
     }
   }
 
   static Future<void> addSleep(int childId, String start, String end) async {
     try {
-      await dio.post('/api/sleep/', data: {
+      final data = <String, dynamic>{
         'child': childId,
         'start': start,
         'end': end,
-      });
+      };
+      print('添加睡眠记录: $data');
+      await dio.post('/api/sleep/', data: data);
     } catch (e) {
+      print('添加睡眠记录失败: $e');
       throw Exception('添加睡眠记录失败: $e');
     }
   }
 
-  static Future<void> addDiaper(int childId, String time, bool wet, bool solid) async {
+  static Future<void> addDiaper(int childId, String time, bool wet, bool solid, String color) async {
     try {
-      await dio.post('/api/changes/', data: {
+      final data = <String, dynamic>{
         'child': childId,
         'time': time,
         'wet': wet,
         'solid': solid,
-        'color': 'unknown',
-      });
+        'color': color,
+      };
+      print('添加尿布记录: $data');
+      await dio.post('/api/changes/', data: data);
     } catch (e) {
+      print('添加尿布记录失败: $e');
       throw Exception('添加尿布记录失败: $e');
     }
   }
