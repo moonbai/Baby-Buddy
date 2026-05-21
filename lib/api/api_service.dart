@@ -79,7 +79,6 @@ class ApiService {
       );
       
       print('登录页面状态码: ${loginPageResponse.statusCode}');
-      print('响应内容前200字符: ${loginPageResponse.data.toString().substring(0, 200)}');
       
       // 解析HTML获取csrfmiddlewaretoken
       final html = loginPageResponse.data.toString();
@@ -98,7 +97,7 @@ class ApiService {
         throw Exception('CSRF token为空');
       }
       
-      print('CSRF token获取成功: ${_csrfToken!.substring(0, 10)}...');
+      print('CSRF token获取成功');
       
       // Step 2: 发送登录请求
       print('Step 2: 发送登录请求到 /login/');
@@ -123,7 +122,6 @@ class ApiService {
       );
       
       print('登录请求状态码: ${loginResponse.statusCode}');
-      print('响应headers: ${loginResponse.headers}');
       
       if (loginResponse.statusCode == 403) {
         throw Exception('用户名或密码错误');
@@ -131,8 +129,7 @@ class ApiService {
       
       if (loginResponse.statusCode == 500) {
         print('服务器返回500错误');
-        print('错误内容: ${loginResponse.data}');
-        throw Exception('服务器内部错误 (500)，请检查服务器配置或Baby Buddy版本');
+        throw Exception('服务器内部错误 (500)');
       }
       
       if (loginResponse.statusCode != 200 && 
@@ -141,109 +138,42 @@ class ApiService {
         throw Exception('登录失败 (状态码: ${loginResponse.statusCode})');
       }
       
-      print('登录请求成功，状态码: ${loginResponse.statusCode}');
+      print('登录请求成功');
       
-      // Step 3: 尝试多个路径获取API key
+      // Step 3: 通过 /api/profile (无尾部斜杠) 获取API key
       print('Step 3: 获取API key');
+      print('尝试访问 /api/profile');
       
-      // 方法1: 通过 /api/profile/
-      try {
-        print('尝试访问 /api/profile/');
-        final profileResponse = await dio.get(
-          '/api/profile/',
-          options: Options(
-            headers: {
-              'Accept': 'application/json',
-            },
-          ),
-        );
-        
-        print('Profile API状态码: ${profileResponse.statusCode}');
-        print('Profile数据: ${profileResponse.data}');
-        
-        if (profileResponse.statusCode == 200 && profileResponse.data != null) {
-          final profileData = profileResponse.data;
-          if (profileData['api_key'] != null) {
-            print('从/api/profile/获取到API key');
-            return profileData['api_key'] as String;
-          }
-        }
-      } catch (e) {
-        print('/api/profile/ 失败: $e');
-      }
-      
-      // 方法2: 通过 /api/api-token-auth/ (Django REST Framework)
-      try {
-        print('尝试访问 /api/api-token-auth/');
-        final tokenResponse = await dio.post(
-          '/api/api-token-auth/',
-          data: {
-            'username': username,
-            'password': password,
+      final profileResponse = await dio.get(
+        '/api/profile',
+        options: Options(
+          headers: {
+            'Accept': 'application/json',
           },
-          options: Options(
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-          ),
-        );
-        
-        print('Token API状态码: ${tokenResponse.statusCode}');
-        print('Token数据: ${tokenResponse.data}');
-        
-        if (tokenResponse.statusCode == 200 && tokenResponse.data != null) {
-          final tokenData = tokenResponse.data;
-          if (tokenData['token'] != null) {
-            print('从/api/api-token-auth/获取到token');
-            return tokenData['token'] as String;
-          }
+        ),
+      );
+      
+      print('Profile API状态码: ${profileResponse.statusCode}');
+      print('Profile数据: ${profileResponse.data}');
+      
+      if (profileResponse.statusCode == 200 && profileResponse.data != null) {
+        final profileData = profileResponse.data;
+        if (profileData['api_key'] != null) {
+          print('成功获取到API key');
+          return profileData['api_key'] as String;
         }
-      } catch (e) {
-        print('/api/api-token-auth/ 失败: $e');
       }
       
-      // 方法3: 通过 /api-token-auth/ (不带api前缀)
-      try {
-        print('尝试访问 /api-token-auth/');
-        final tokenResponse2 = await dio.post(
-          '/api-token-auth/',
-          data: {
-            'username': username,
-            'password': password,
-          },
-          options: Options(
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-          ),
-        );
-        
-        print('Token API 2状态码: ${tokenResponse2.statusCode}');
-        print('Token数据: ${tokenResponse2.data}');
-        
-        if (tokenResponse2.statusCode == 200 && tokenResponse2.data != null) {
-          final tokenData = tokenResponse2.data;
-          if (tokenData['token'] != null) {
-            print('从/api-token-auth/获取到token');
-            return tokenData['token'] as String;
-          }
-        }
-      } catch (e) {
-        print('/api-token-auth/ 失败: $e');
-      }
-      
-      throw Exception('无法获取API key，请确认Baby Buddy已正确安装并启用API功能');
+      throw Exception('无法获取API key');
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionTimeout) {
         throw Exception('连接超时，请检查服务器地址是否正确');
       } else if (e.type == DioExceptionType.connectionError) {
         throw Exception('无法连接到服务器，请检查服务器地址和网络');
       } else if (e.response?.statusCode == 404) {
-        throw Exception('服务器地址错误，找不到登录页面');
+        throw Exception('服务器地址错误，找不到API端点');
       } else if (e.response?.statusCode == 500) {
-        throw Exception('服务器内部错误 (500)，请检查服务器配置或Baby Buddy版本');
+        throw Exception('服务器内部错误 (500)');
       } else {
         print('DioException: $e');
         print('Response: ${e.response?.data}');
