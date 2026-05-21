@@ -14,6 +14,9 @@ jobs:
         with:
           flutter-version: '3.24.0'
           channel: stable
+      - name: Create local.properties
+        run: |
+          echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
       - name: Install dependencies
         run: flutter pub get
       - name: Enable HTTP cleartext
