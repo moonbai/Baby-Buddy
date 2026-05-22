@@ -8,8 +8,11 @@ class ApiService {
   static String? _baseUrl;
   static Map<String, String> _cookies = {};
   static String? _csrfToken;
+  static bool _isInitialized = false;
 
   static Future<void> init() async {
+    if (_isInitialized) return;
+    
     _baseUrl = await Storage.getServerUrl();
     final baseUrl = _baseUrl ?? 'http://127.0.0.1:8000';
     
@@ -23,7 +26,6 @@ class ApiService {
       },
     ));
     
-    // 添加cookie管理拦截器
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
         if (_cookies.isNotEmpty) {
@@ -56,10 +58,27 @@ class ApiService {
       },
     ));
     
-    // 如果已有token，添加认证拦截器
     final token = await Storage.getToken();
-    if (token != null) {
-      dio.interceptors.add(AuthInterceptor(token));
+    if (token != null && token.isNotEmpty) {
+      _addAuthInterceptor(token);
+    }
+    
+    _isInitialized = true;
+  }
+
+  static void _addAuthInterceptor(String token) {
+    for (var interceptor in dio.interceptors) {
+      if (interceptor is AuthInterceptor) {
+        return;
+      }
+    }
+    dio.interceptors.add(AuthInterceptor(token));
+  }
+
+  static Future<void> resetInterceptor() async {
+    final token = await Storage.getToken();
+    if (token != null && token.isNotEmpty) {
+      _addAuthInterceptor(token);
     }
   }
 
@@ -67,7 +86,10 @@ class ApiService {
     try {
       print('=== 开始登录流程 ===');
       
-      // Step 1: 访问登录页面获取CSRF token和session
+      if (!_isInitialized) {
+        await init();
+      }
+      
       print('Step 1: 访问 /login/ 获取CSRF token');
       final loginPageResponse = await dio.get(
         '/login/',
@@ -97,7 +119,6 @@ class ApiService {
       
       print('CSRF token获取成功');
       
-      // Step 2: 发送登录请求
       print('Step 2: 发送登录请求到 /login/');
       final formData = {
         'csrfmiddlewaretoken': _csrfToken,
@@ -136,9 +157,7 @@ class ApiService {
       
       print('登录请求成功');
       
-      // Step 3: 通过 /api/profile 获取API key
       print('Step 3: 获取API key');
-      print('尝试访问 /api/profile');
       
       final profileResponse = await dio.get(
         '/api/profile',
@@ -156,9 +175,9 @@ class ApiService {
         final profileData = profileResponse.data;
         if (profileData['api_key'] != null) {
           print('成功获取到API key');
-          // 登录成功后添加AuthInterceptor
-          dio.interceptors.add(AuthInterceptor(profileData['api_key']));
-          return profileData['api_key'] as String;
+          final token = profileData['api_key'] as String;
+          _addAuthInterceptor(token);
+          return token;
         }
       }
       
@@ -183,7 +202,6 @@ class ApiService {
     }
   }
 
-  // ==================== Children API ====================
   static Future<List<dynamic>> getChildren({int? limit, int? offset}) async {
     try {
       final query = <String, dynamic>{};
@@ -209,7 +227,6 @@ class ApiService {
     }
   }
 
-  // ==================== Changes (Diaper) API ====================
   static Future<List<dynamic>> getChanges({int? limit, int? offset, int? childId}) async {
     try {
       final query = <String, dynamic>{};
@@ -262,7 +279,6 @@ class ApiService {
     }
   }
 
-  // ==================== Feedings API ====================
   static Future<List<dynamic>> getFeedings({int? limit, int? offset, int? childId}) async {
     try {
       final query = <String, dynamic>{};
@@ -318,7 +334,6 @@ class ApiService {
     }
   }
 
-  // ==================== Sleep API ====================
   static Future<List<dynamic>> getSleep({int? limit, int? offset, int? childId}) async {
     try {
       final query = <String, dynamic>{};
@@ -371,7 +386,6 @@ class ApiService {
     }
   }
 
-  // ==================== Tummy Times API ====================
   static Future<List<dynamic>> getTummyTimes({int? limit, int? offset, int? childId}) async {
     try {
       final query = <String, dynamic>{};
@@ -408,7 +422,6 @@ class ApiService {
     }
   }
 
-  // ==================== Pumping API ====================
   static Future<List<dynamic>> getPumping({int? limit, int? offset, int? childId}) async {
     try {
       final query = <String, dynamic>{};
@@ -445,7 +458,6 @@ class ApiService {
     }
   }
 
-  // ==================== Notes API ====================
   static Future<List<dynamic>> getNotes({int? limit, int? offset, int? childId}) async {
     try {
       final query = <String, dynamic>{};
@@ -495,7 +507,6 @@ class ApiService {
     }
   }
 
-  // ==================== Weight API ====================
   static Future<List<dynamic>> getWeight({int? limit, int? offset, int? childId}) async {
     try {
       final query = <String, dynamic>{};
@@ -531,7 +542,6 @@ class ApiService {
     }
   }
 
-  // ==================== Height API ====================
   static Future<List<dynamic>> getHeight({int? limit, int? offset, int? childId}) async {
     try {
       final query = <String, dynamic>{};
@@ -567,7 +577,6 @@ class ApiService {
     }
   }
 
-  // ==================== Head Circumference API ====================
   static Future<List<dynamic>> getHeadCircumference({int? limit, int? offset, int? childId}) async {
     try {
       final query = <String, dynamic>{};
@@ -603,7 +612,6 @@ class ApiService {
     }
   }
 
-  // ==================== BMI API ====================
   static Future<List<dynamic>> getBMI({int? limit, int? offset, int? childId}) async {
     try {
       final query = <String, dynamic>{};
@@ -638,7 +646,6 @@ class ApiService {
     }
   }
 
-  // ==================== Temperature API ====================
   static Future<List<dynamic>> getTemperature({int? limit, int? offset, int? childId}) async {
     try {
       final query = <String, dynamic>{};
@@ -674,7 +681,6 @@ class ApiService {
     }
   }
 
-  // ==================== Timers API ====================
   static Future<List<dynamic>> getTimers({int? limit, int? offset, int? childId}) async {
     try {
       final query = <String, dynamic>{};
@@ -716,7 +722,6 @@ class ApiService {
     }
   }
 
-  // ==================== Tags API ====================
   static Future<List<dynamic>> getTags() async {
     try {
       final response = await dio.get('/api/tags/');
@@ -729,7 +734,6 @@ class ApiService {
     }
   }
 
-  // ==================== Timeline (Combined) ====================
   static Future<List<dynamic>> getTimeline({int? childId, int? limit}) async {
     try {
       final responses = await Future.wait([
