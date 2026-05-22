@@ -107,7 +107,7 @@ class ApiService {
       }
 
       final profileResponse = await dio.get(
-        '/api/profile/',
+        '/api/profile',
         options: Options(
           headers: {
             'Accept': 'application/json',
