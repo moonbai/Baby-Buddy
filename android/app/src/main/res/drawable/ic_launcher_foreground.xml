@@ -15,13 +15,13 @@
         android:pathData="M54,30c-13.26,0 -24,10.74 -24,24s10.74,24 24,24 24,-10.74 24,-24 -10.74,-24 -24,-24Z"/>
     <circle
         android:fillColor="#2A2A2A"
-        android:cx="43"
-        android:cy="48"
+        android:centerX="43"
+        android:centerY="48"
         android:radius="4"/>
     <circle
         android:fillColor="#2A2A2A"
-        android:cx="65"
-        android:cy="48"
+        android:centerX="65"
+        android:centerY="48"
         android:radius="4"/>
     <path
         android:fillColor="#FFB6C1"
