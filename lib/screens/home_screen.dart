@@ -139,6 +139,24 @@ class _HomeScreenState extends State<HomeScreen> {
         case 'note':
           await ApiService.deleteNote(id);
           break;
+        case 'tummy time':
+          await ApiService.deleteTummyTime(id);
+          break;
+        case 'pumping':
+          await ApiService.deletePumping(id);
+          break;
+        case 'weight':
+          await ApiService.deleteWeight(id);
+          break;
+        case 'height':
+          await ApiService.deleteHeight(id);
+          break;
+        case 'head circumference':
+          await ApiService.deleteHeadCircumference(id);
+          break;
+        case 'temperature':
+          await ApiService.deleteTemperature(id);
+          break;
         default:
           Fluttertoast.showToast(msg: '该类型暂不支持删除');
           return;
@@ -628,8 +646,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final brief = _getRecordBrief(item);
     final timeStr = item['time'] ?? item['start'] ?? item['date'] ?? '';
     final time = _formatTime(timeStr);
-    final model = item['model']?.toString() ?? '';
-    final canEditDelete = ['sleep', 'feeding', 'change', 'note'].contains(model);
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -660,24 +676,33 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: const TextStyle(fontSize: 14, height: 1.5),
                 ),
                 const SizedBox(height: 12),
-                if (canEditDelete)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      // TODO: 编辑功能待实现
-                      TextButton.icon(
-                        onPressed: () => Fluttertoast.showToast(msg: '编辑功能待实现'),
-                        icon: const Icon(Icons.edit, size: 18),
-                        label: const Text('编辑'),
-                      ),
-                      TextButton.icon(
-                        onPressed: () => deleteRecord(item),
-                        icon: const Icon(Icons.delete, size: 18),
-                        label: const Text('删除'),
-                        style: TextButton.styleFrom(foregroundColor: Colors.red),
-                      ),
-                    ],
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () async {
+                        final childId = await Storage.getChildId();
+                        if (childId != null) {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => QuickAdd(editItem: item, childId: childId),
+                            ),
+                          );
+                          loadTimeline();
+                        }
+                      },
+                      icon: const Icon(Icons.edit, size: 18),
+                      label: const Text('编辑'),
+                    ),
+                    TextButton.icon(
+                      onPressed: () => deleteRecord(item),
+                      icon: const Icon(Icons.delete, size: 18),
+                      label: const Text('删除'),
+                      style: TextButton.styleFrom(foregroundColor: Colors.red),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),

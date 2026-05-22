@@ -384,6 +384,22 @@ class ApiService {
     }
   }
 
+  static Future<void> updateTummyTime(int id, Map<String, dynamic> data) async {
+    try {
+      await dio.patch('/api/tummy-times/$id/', data: data);
+    } on DioException catch (e) {
+      throw _handleApiError(e, '更新俯卧时间记录');
+    }
+  }
+
+  static Future<void> deleteTummyTime(int id) async {
+    try {
+      await dio.delete('/api/tummy-times/$id/');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '删除俯卧时间记录');
+    }
+  }
+
   static Future<List<dynamic>> getPumping({int? limit, int? offset, int? childId}) async {
     try {
       final query = <String, dynamic>{};
@@ -420,6 +436,22 @@ class ApiService {
       await dio.post('/api/pumping/', data: data);
     } on DioException catch (e) {
       throw _handleApiError(e, '添加吸奶记录');
+    }
+  }
+
+  static Future<void> updatePumping(int id, Map<String, dynamic> data) async {
+    try {
+      await dio.patch('/api/pumping/$id/', data: data);
+    } on DioException catch (e) {
+      throw _handleApiError(e, '更新吸奶记录');
+    }
+  }
+
+  static Future<void> deletePumping(int id) async {
+    try {
+      await dio.delete('/api/pumping/$id/');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '删除吸奶记录');
     }
   }
 
@@ -500,9 +532,7 @@ class ApiService {
   static Future<void> addWeight(int childId, String date, double weight, {String? weightUnit, String? notes}) async {
     try {
       final data = <String, dynamic>{
-        'child': childId,
-        'date': date,
-        'weight': weight,
+        'child': childId, 'date': date, 'weight': weight,
       };
       if (weightUnit != null) data['weight_unit'] = weightUnit;
       if (notes != null) data['notes'] = notes;
@@ -510,6 +540,22 @@ class ApiService {
       await dio.post('/api/weight/', data: data);
     } on DioException catch (e) {
       throw _handleApiError(e, '添加体重记录');
+    }
+  }
+
+  static Future<void> updateWeight(int id, Map<String, dynamic> data) async {
+    try {
+      await dio.patch('/api/weight/$id/', data: data);
+    } on DioException catch (e) {
+      throw _handleApiError(e, '更新体重记录');
+    }
+  }
+
+  static Future<void> deleteWeight(int id) async {
+    try {
+      await dio.delete('/api/weight/$id/');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '删除体重记录');
     }
   }
 
@@ -538,9 +584,7 @@ class ApiService {
   static Future<void> addHeight(int childId, String date, double height, {String? heightUnit, String? notes}) async {
     try {
       final data = <String, dynamic>{
-        'child': childId,
-        'date': date,
-        'height': height,
+        'child': childId, 'date': date, 'height': height,
       };
       if (heightUnit != null) data['height_unit'] = heightUnit;
       if (notes != null) data['notes'] = notes;
@@ -548,6 +592,22 @@ class ApiService {
       await dio.post('/api/height/', data: data);
     } on DioException catch (e) {
       throw _handleApiError(e, '添加身高记录');
+    }
+  }
+
+  static Future<void> updateHeight(int id, Map<String, dynamic> data) async {
+    try {
+      await dio.patch('/api/height/$id/', data: data);
+    } on DioException catch (e) {
+      throw _handleApiError(e, '更新身高记录');
+    }
+  }
+
+  static Future<void> deleteHeight(int id) async {
+    try {
+      await dio.delete('/api/height/$id/');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '删除身高记录');
     }
   }
 
@@ -576,9 +636,7 @@ class ApiService {
   static Future<void> addHeadCircumference(int childId, String date, double circumference, {String? circumferenceUnit, String? notes}) async {
     try {
       final data = <String, dynamic>{
-        'child': childId,
-        'date': date,
-        'circumference': circumference,
+        'child': childId, 'date': date, 'circumference': circumference,
       };
       if (circumferenceUnit != null) data['circumference_unit'] = circumferenceUnit;
       if (notes != null) data['notes'] = notes;
@@ -586,6 +644,22 @@ class ApiService {
       await dio.post('/api/head-circumference/', data: data);
     } on DioException catch (e) {
       throw _handleApiError(e, '添加头围记录');
+    }
+  }
+
+  static Future<void> updateHeadCircumference(int id, Map<String, dynamic> data) async {
+    try {
+      await dio.patch('/api/head-circumference/$id/', data: data);
+    } on DioException catch (e) {
+      throw _handleApiError(e, '更新头围记录');
+    }
+  }
+
+  static Future<void> deleteHeadCircumference(int id) async {
+    try {
+      await dio.delete('/api/head-circumference/$id/');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '删除头围记录');
     }
   }
 
@@ -651,9 +725,7 @@ class ApiService {
   static Future<void> addTemperature(int childId, String time, double temperature, {String? temperatureUnit, String? notes}) async {
     try {
       final data = <String, dynamic>{
-        'child': childId,
-        'time': time,
-        'temperature': temperature,
+        'child': childId, 'time': time, 'temperature': temperature,
       };
       if (temperatureUnit != null) data['temperature_unit'] = temperatureUnit;
       if (notes != null) data['notes'] = notes;
@@ -661,6 +733,22 @@ class ApiService {
       await dio.post('/api/temperature/', data: data);
     } on DioException catch (e) {
       throw _handleApiError(e, '添加体温记录');
+    }
+  }
+
+  static Future<void> updateTemperature(int id, Map<String, dynamic> data) async {
+    try {
+      await dio.patch('/api/temperature/$id/', data: data);
+    } on DioException catch (e) {
+      throw _handleApiError(e, '更新体温记录');
+    }
+  }
+
+  static Future<void> deleteTemperature(int id) async {
+    try {
+      await dio.delete('/api/temperature/$id/');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '删除体温记录');
     }
   }
 
@@ -724,6 +812,10 @@ class ApiService {
         getTummyTimes(limit: limit, childId: childId),
         getPumping(limit: limit, childId: childId),
         getNotes(limit: limit, childId: childId),
+        getWeight(limit: limit, childId: childId),
+        getHeight(limit: limit, childId: childId),
+        getHeadCircumference(limit: limit, childId: childId),
+        getTemperature(limit: limit, childId: childId),
       ]);
 
       final List<dynamic> timeline = [];
