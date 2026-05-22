@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:babybuddy_app/api/api_service.dart';
@@ -267,8 +268,23 @@ class _FeedingOptionsState extends State<FeedingOptions> {
   bool _isLoading = false;
   final TextEditingController _amountController = TextEditingController();
 
-  final _feedingTypes = const ['breast milk', 'formula', 'fortified breast milk', 'pumped milk'];
-  final _feedingMethods = const ['left breast', 'right breast', 'both breasts', 'bottle', 'spoon'];
+  final Map<String, String> _feedingTypesMap = {
+    'breast milk': '母乳',
+    'formula': '配方奶',
+    'fortified breast milk': '强化母乳',
+    'pumped milk': '泵出奶',
+  };
+
+  final Map<String, String> _feedingMethodsMap = {
+    'left breast': '左侧乳房',
+    'right breast': '右侧乳房',
+    'both breasts': '双侧',
+    'bottle': '奶瓶',
+    'spoon': '勺子',
+  };
+
+  final List<String> _feedingTypes = const ['breast milk', 'formula', 'fortified breast milk', 'pumped milk'];
+  final List<String> _feedingMethods = const ['left breast', 'right breast', 'both breasts', 'bottle', 'spoon'];
 
   Future<void> _save() async {
     setState(() => _isLoading = true);
@@ -291,8 +307,14 @@ class _FeedingOptionsState extends State<FeedingOptions> {
       widget.onSaved();
     } catch (e) {
       if (mounted) {
+        String errorMsg = '添加失败';
+        if (e.toString().contains('403')) {
+          errorMsg = '添加失败：没有权限，请重新登录';
+        } else if (e.toString().contains('DioException')) {
+          errorMsg = '添加失败：网络错误，请检查网络连接';
+        }
         Fluttertoast.showToast(
-          msg: '添加失败: $e',
+          msg: errorMsg,
           backgroundColor: Colors.red,
           toastLength: Toast.LENGTH_LONG,
         );
@@ -375,8 +397,14 @@ class _FeedingOptionsState extends State<FeedingOptions> {
       runSpacing: 8,
       children: options.map((option) {
         final isSelected = option == selected;
+        String displayText = option;
+        if (_feedingTypesMap.containsKey(option)) {
+          displayText = _feedingTypesMap[option]!;
+        } else if (_feedingMethodsMap.containsKey(option)) {
+          displayText = _feedingMethodsMap[option]!;
+        }
         return ChoiceChip(
-          label: Text(option),
+          label: Text(displayText),
           selected: isSelected,
           onSelected: (_) => onChanged(option),
         );
@@ -417,8 +445,14 @@ class _SleepOptionsState extends State<SleepOptions> {
       widget.onSaved();
     } catch (e) {
       if (mounted) {
+        String errorMsg = '添加失败';
+        if (e.toString().contains('403')) {
+          errorMsg = '添加失败：没有权限，请重新登录';
+        } else if (e.toString().contains('DioException')) {
+          errorMsg = '添加失败：网络错误，请检查网络连接';
+        }
         Fluttertoast.showToast(
-          msg: '添加失败: $e',
+          msg: errorMsg,
           backgroundColor: Colors.red,
           toastLength: Toast.LENGTH_LONG,
         );
@@ -499,6 +533,14 @@ class _DiaperOptionsState extends State<DiaperOptions> {
   String _selectedColor = 'unknown';
   bool _isLoading = false;
 
+  final Map<String, String> _colorMap = {
+    'unknown': '未知',
+    'yellow': '黄色',
+    'brown': '棕色',
+    'green': '绿色',
+    'other': '其他',
+  };
+
   Future<void> _save() async {
     setState(() => _isLoading = true);
     try {
@@ -513,8 +555,14 @@ class _DiaperOptionsState extends State<DiaperOptions> {
       widget.onSaved();
     } catch (e) {
       if (mounted) {
+        String errorMsg = '添加失败';
+        if (e.toString().contains('403')) {
+          errorMsg = '添加失败：没有权限，请重新登录';
+        } else if (e.toString().contains('DioException')) {
+          errorMsg = '添加失败：网络错误，请检查网络连接';
+        }
         Fluttertoast.showToast(
-          msg: '添加失败: $e',
+          msg: errorMsg,
           backgroundColor: Colors.red,
           toastLength: Toast.LENGTH_LONG,
         );
@@ -606,8 +654,9 @@ class _DiaperOptionsState extends State<DiaperOptions> {
       runSpacing: 8,
       children: options.map((option) {
         final isSelected = option == selected;
+        String displayText = _colorMap[option] ?? option;
         return ChoiceChip(
-          label: Text(option),
+          label: Text(displayText),
           selected: isSelected,
           onSelected: (_) => onChanged(option),
         );
@@ -648,8 +697,14 @@ class _TummyTimeOptionsState extends State<TummyTimeOptions> {
       widget.onSaved();
     } catch (e) {
       if (mounted) {
+        String errorMsg = '添加失败';
+        if (e.toString().contains('403')) {
+          errorMsg = '添加失败：没有权限，请重新登录';
+        } else if (e.toString().contains('DioException')) {
+          errorMsg = '添加失败：网络错误，请检查网络连接';
+        }
         Fluttertoast.showToast(
-          msg: '添加失败: $e',
+          msg: errorMsg,
           backgroundColor: Colors.red,
           toastLength: Toast.LENGTH_LONG,
         );
@@ -746,8 +801,14 @@ class _PumpingOptionsState extends State<PumpingOptions> {
       widget.onSaved();
     } catch (e) {
       if (mounted) {
+        String errorMsg = '添加失败';
+        if (e.toString().contains('403')) {
+          errorMsg = '添加失败：没有权限，请重新登录';
+        } else if (e.toString().contains('DioException')) {
+          errorMsg = '添加失败：网络错误，请检查网络连接';
+        }
         Fluttertoast.showToast(
-          msg: '添加失败: $e',
+          msg: errorMsg,
           backgroundColor: Colors.red,
           toastLength: Toast.LENGTH_LONG,
         );
@@ -840,8 +901,14 @@ class _NoteOptionsState extends State<NoteOptions> {
       widget.onSaved();
     } catch (e) {
       if (mounted) {
+        String errorMsg = '添加失败';
+        if (e.toString().contains('403')) {
+          errorMsg = '添加失败：没有权限，请重新登录';
+        } else if (e.toString().contains('DioException')) {
+          errorMsg = '添加失败：网络错误，请检查网络连接';
+        }
         Fluttertoast.showToast(
-          msg: '添加失败: $e',
+          msg: errorMsg,
           backgroundColor: Colors.red,
           toastLength: Toast.LENGTH_LONG,
         );
@@ -963,8 +1030,14 @@ class _MeasurementOptionsState extends State<MeasurementOptions> {
       widget.onSaved();
     } catch (e) {
       if (mounted) {
+        String errorMsg = '添加失败';
+        if (e.toString().contains('403')) {
+          errorMsg = '添加失败：没有权限，请重新登录';
+        } else if (e.toString().contains('DioException')) {
+          errorMsg = '添加失败：网络错误，请检查网络连接';
+        }
         Fluttertoast.showToast(
-          msg: '添加失败: $e',
+          msg: errorMsg,
           backgroundColor: Colors.red,
           toastLength: Toast.LENGTH_LONG,
         );
