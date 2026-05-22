@@ -11,15 +11,19 @@ class ApiService {
   static bool _isInitialized = false;
 
   static Future<void> init() async {
-    if (_isInitialized) return;
+    if (_isInitialized) {
+      await resetInterceptor();
+      return;
+    }
     
     _baseUrl = await Storage.getServerUrl();
     final baseUrl = _baseUrl ?? 'http://127.0.0.1:8000';
     
     dio = Dio(BaseOptions(
       baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
+      connectTimeout: const Duration(seconds: 60),
+      receiveTimeout: const Duration(seconds: 60),
+      sendTimeout: const Duration(seconds: 60),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json, text/html',
