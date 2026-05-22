@@ -20,32 +20,45 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _selectedChildName;
   String? _selectedChildId;
   String? _serverUrl;
+  bool _hasSelectedChild = false;
 
   Future<void> loadTimeline() async {
+    final childId = await Storage.getChildId();
+    
+    if (childId == null) {
+      setState(() {
+        _hasSelectedChild = false;
+        _selectedChildName = null;
+        _selectedChildId = null;
+        timeline = [];
+        _isLoading = false;
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
+      _hasSelectedChild = true;
     });
+
     try {
-      final childId = await Storage.getChildId();
       final serverUrl = await Storage.getServerUrl();
-      
-      if (childId != null) {
-        final children = await ApiService.getChildren();
-        final selectedChild = children.firstWhere(
-          (c) => c['id'] == childId,
-          orElse: () => null,
-        );
-        if (selectedChild != null) {
-          setState(() {
-            _selectedChildName = '${selectedChild['first_name'] ?? ''} ${selectedChild['last_name'] ?? ''}'.trim();
-            _selectedChildId = childId.toString();
-          });
-        }
+      final children = await ApiService.getChildren();
+      final selectedChild = children.firstWhere(
+        (c) => c['id'] == childId,
+        orElse: () => null,
+      );
+
+      if (selectedChild != null) {
+        setState(() {
+          _selectedChildName = '${selectedChild['first_name'] ?? ''} ${selectedChild['last_name'] ?? ''}'.trim();
+          _selectedChildId = childId.toString();
+        });
       }
-      
+
       setState(() => _serverUrl = serverUrl);
-      
+
       final data = await ApiService.getTimeline(childId: childId);
       setState(() => timeline = data);
     } catch (e) {
@@ -78,7 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> deleteRecord(dynamic item) async {
     final model = item['model']?.toString() ?? '';
     final id = item['id'];
-    
+
     if (id == null) {
       Fluttertoast.showToast(msg: '无法删除：记录ID不存在');
       return;
@@ -266,17 +279,19 @@ class _HomeScreenState extends State<HomeScreen> {
   String _getRecordDetail(dynamic item) {
     final model = item['model']?.toString() ?? '';
     final buffer = StringBuffer();
-    
+
     switch (model) {
       case 'sleep':
         final nap = item['nap'] == true;
         final duration = item['duration'];
         final start = item['start'];
         final end = item['end'];
+        final notes = item['notes'];
         buffer.writeln('类型: ${nap ? "小睡" : "睡觉"}');
         if (duration != null) buffer.writeln('时长: $duration');
         if (start != null) buffer.writeln('开始: ${_formatTime(start)}');
         if (end != null) buffer.writeln('结束: ${_formatTime(end)}');
+        if (notes != null && notes.toString().isNotEmpty) buffer.writeln('备注: $notes');
         break;
       case 'feeding':
         final method = item['method'];
@@ -354,7 +369,7 @@ class _HomeScreenState extends State<HomeScreen> {
         if (time != null) buffer.writeln('时间: ${_formatTime(time)}');
         break;
     }
-    
+
     return buffer.toString().trim();
   }
 
@@ -397,16 +412,25 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('Baby Buddy'),
         actions: [
           IconButton(
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChildSelect())),
+            onPressed: () async {
+              await Navigator.push(context, MaterialPageRoute(builder: (_) => const ChildSelect()));
+              loadTimeline();
+            },
             icon: const Icon(Icons.person),
+            tooltip: '选择宝宝',
           ),
           IconButton(onPressed: logout, icon: const Icon(Icons.logout)),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const QuickAdd())),
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: _hasSelectedChild
+          ? FloatingActionButton(
+              onPressed: () async {
+                await Navigator.push(context, MaterialPageRoute(builder: (_) => const QuickAdd()));
+                loadTimeline();
+              },
+              child: const Icon(Icons.add),
+            )
+          : null,
       body: RefreshIndicator(
         onRefresh: loadTimeline,
         child: _buildBody(),
@@ -415,6 +439,36 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBody() {
+    if (!_hasSelectedChild) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.person_add, size: 80, color: Colors.grey[400]),
+            const SizedBox(height: 20),
+            Text(
+              '请先选择宝宝',
+              style: TextStyle(fontSize: 20, color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              '点击右上角图标选择宝宝',
+              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: () async {
+                await Navigator.push(context, MaterialPageRoute(builder: (_) => const ChildSelect()));
+                loadTimeline();
+              },
+              icon: const Icon(Icons.person),
+              label: const Text('选择宝宝'),
+            ),
+          ],
+        ),
+      );
+    }
+
     if (_isLoading && timeline.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -440,69 +494,65 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    if (_selectedChildName != null) {
-      return Column(
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    CircleAvatar(
-                      backgroundColor: Theme.of(context).primaryColor,
-                      child: Text(
-                        _selectedChildName![0].toUpperCase(),
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            '当前宝宝',
-                            style: TextStyle(fontSize: 12, color: Colors.grey),
-                          ),
-                          Text(
-                            _selectedChildName!,
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.open_in_new),
-                      tooltip: '点击复制网页链接',
-                      onPressed: _openInBrowser,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                GestureDetector(
-                  onLongPress: _openInBrowser,
-                  child: Text(
-                    '长按可复制网页链接',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  ),
-                ),
-              ],
-            ),
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).primaryColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
           ),
-          Expanded(child: _buildTimelineList()),
-        ],
-      );
-    }
-
-    return _buildTimelineList();
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: Theme.of(context).primaryColor,
+                    child: Text(
+                      _selectedChildName![0].toUpperCase(),
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '当前宝宝',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                        Text(
+                          _selectedChildName!,
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.open_in_new),
+                    tooltip: '点击复制网页链接',
+                    onPressed: _openInBrowser,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onLongPress: _openInBrowser,
+                child: Text(
+                  '长按可复制网页链接',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(child: _buildTimelineList()),
+      ],
+    );
   }
 
   Widget _buildTimelineList() {
@@ -517,13 +567,11 @@ class _HomeScreenState extends State<HomeScreen> {
               '暂无记录',
               style: TextStyle(fontSize: 18, color: Colors.grey[600]),
             ),
-            if (_selectedChildName == null) ...[
-              const SizedBox(height: 8),
-              Text(
-                '请先选择宝宝',
-                style: TextStyle(fontSize: 14, color: Colors.grey[500]),
-              ),
-            ],
+            const SizedBox(height: 8),
+            Text(
+              '点击右下角 + 添加记录',
+              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+            ),
           ],
         ),
       );
