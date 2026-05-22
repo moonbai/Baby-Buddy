@@ -769,11 +769,10 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> addTimer(int childId, {String? name}) async {
+  static Future<Map<String, dynamic>> addTimer({int? childId, String? name}) async {
     try {
-      final data = <String, dynamic>{
-        'child': childId,
-      };
+      final data = <String, dynamic>{};
+      if (childId != null) data['child'] = childId;
       if (name != null) data['name'] = name;
 
       final response = await dio.post('/api/timers/', data: data);
@@ -783,11 +782,37 @@ class ApiService {
     }
   }
 
+  static Future<Map<String, dynamic>> getTimerById(int id) async {
+    try {
+      final response = await dio.get('/api/timers/$id/');
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw _handleApiError(e, '获取计时器详情');
+    }
+  }
+
+  static Future<Map<String, dynamic>> restartTimer(int id) async {
+    try {
+      final response = await dio.patch('/api/timers/$id/restart/');
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw _handleApiError(e, '重启计时器');
+    }
+  }
+
   static Future<void> stopTimer(int id) async {
     try {
       await dio.delete('/api/timers/$id/');
     } on DioException catch (e) {
       throw _handleApiError(e, '停止计时器');
+    }
+  }
+
+  static Future<void> updateTimer(int id, Map<String, dynamic> data) async {
+    try {
+      await dio.patch('/api/timers/$id/', data: data);
+    } on DioException catch (e) {
+      throw _handleApiError(e, '更新计时器');
     }
   }
 

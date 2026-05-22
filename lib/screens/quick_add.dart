@@ -383,11 +383,13 @@ class FeedingOptions extends StatefulWidget {
   final int childId;
   final VoidCallback onSaved;
   final Map<String, dynamic>? editItem;
+  final Map<String, dynamic>? timer;
   const FeedingOptions({
     super.key,
     required this.childId,
     required this.onSaved,
     this.editItem,
+    this.timer,
   });
 
   @override
@@ -406,7 +408,13 @@ class _FeedingOptionsState extends State<FeedingOptions> {
   @override
   void initState() {
     super.initState();
-    if (widget.editItem != null) {
+    if (widget.timer != null) {
+      final timer = widget.timer!;
+      if (timer['start'] != null) {
+        _startTime = DateTimeUtils.parseServerTime(timer['start']);
+        _endTime = DateTime.now();
+      }
+    } else if (widget.editItem != null) {
       final item = widget.editItem!;
       _selectedType = item['type'] ?? _selectedType;
       _selectedMethod = item['method'] ?? _selectedMethod;
@@ -476,16 +484,30 @@ class _FeedingOptionsState extends State<FeedingOptions> {
         await ApiService.updateFeeding(widget.editItem!['id'], data);
         Fluttertoast.showToast(msg: '喂奶记录已更新');
       } else {
-        await ApiService.addFeeding(
-          widget.childId,
-          DateTimeUtils.formatForApi(_startTime),
-          DateTimeUtils.formatForApi(_endTime),
-          _selectedType,
-          _selectedMethod,
-          amount: amount,
-          amountUnit: 'ml',
-          notes: _notesController.text.isNotEmpty ? _notesController.text : null,
-        );
+        if (widget.timer != null) {
+          await ApiService.addFeeding(
+            widget.childId,
+            DateTimeUtils.formatForApi(_startTime),
+            DateTimeUtils.formatForApi(_endTime),
+            _selectedType,
+            _selectedMethod,
+            timer: widget.timer!['id'] as int,
+            amount: amount,
+            amountUnit: 'ml',
+            notes: _notesController.text.isNotEmpty ? _notesController.text : null,
+          );
+        } else {
+          await ApiService.addFeeding(
+            widget.childId,
+            DateTimeUtils.formatForApi(_startTime),
+            DateTimeUtils.formatForApi(_endTime),
+            _selectedType,
+            _selectedMethod,
+            amount: amount,
+            amountUnit: 'ml',
+            notes: _notesController.text.isNotEmpty ? _notesController.text : null,
+          );
+        }
         Fluttertoast.showToast(msg: '喂奶记录已添加');
       }
       widget.onSaved();
@@ -610,11 +632,13 @@ class SleepOptions extends StatefulWidget {
   final int childId;
   final VoidCallback onSaved;
   final Map<String, dynamic>? editItem;
+  final Map<String, dynamic>? timer;
   const SleepOptions({
     super.key,
     required this.childId,
     required this.onSaved,
     this.editItem,
+    this.timer,
   });
 
   @override
@@ -631,7 +655,13 @@ class _SleepOptionsState extends State<SleepOptions> {
   @override
   void initState() {
     super.initState();
-    if (widget.editItem != null) {
+    if (widget.timer != null) {
+      final timer = widget.timer!;
+      if (timer['start'] != null) {
+        _startTime = DateTimeUtils.parseServerTime(timer['start']);
+        _endTime = DateTime.now();
+      }
+    } else if (widget.editItem != null) {
       final item = widget.editItem!;
       _isNap = item['nap'] ?? false;
       if (item['start'] != null) {
@@ -668,13 +698,24 @@ class _SleepOptionsState extends State<SleepOptions> {
         await ApiService.updateSleep(widget.editItem!['id'], data);
         Fluttertoast.showToast(msg: '睡眠记录已更新');
       } else {
-        await ApiService.addSleep(
-          widget.childId,
-          DateTimeUtils.formatForApi(_startTime),
-          DateTimeUtils.formatForApi(_endTime),
-          nap: _isNap,
-          notes: _notesController.text.isNotEmpty ? _notesController.text : null,
-        );
+        if (widget.timer != null) {
+          await ApiService.addSleep(
+            widget.childId,
+            DateTimeUtils.formatForApi(_startTime),
+            DateTimeUtils.formatForApi(_endTime),
+            timer: widget.timer!['id'] as int,
+            nap: _isNap,
+            notes: _notesController.text.isNotEmpty ? _notesController.text : null,
+          );
+        } else {
+          await ApiService.addSleep(
+            widget.childId,
+            DateTimeUtils.formatForApi(_startTime),
+            DateTimeUtils.formatForApi(_endTime),
+            nap: _isNap,
+            notes: _notesController.text.isNotEmpty ? _notesController.text : null,
+          );
+        }
         Fluttertoast.showToast(msg: '睡眠记录已添加');
       }
       widget.onSaved();
@@ -961,11 +1002,13 @@ class TummyTimeOptions extends StatefulWidget {
   final int childId;
   final VoidCallback onSaved;
   final Map<String, dynamic>? editItem;
+  final Map<String, dynamic>? timer;
   const TummyTimeOptions({
     super.key,
     required this.childId,
     required this.onSaved,
     this.editItem,
+    this.timer,
   });
 
   @override
@@ -982,7 +1025,13 @@ class _TummyTimeOptionsState extends State<TummyTimeOptions> {
   @override
   void initState() {
     super.initState();
-    if (widget.editItem != null) {
+    if (widget.timer != null) {
+      final timer = widget.timer!;
+      if (timer['start'] != null) {
+        _startTime = DateTimeUtils.parseServerTime(timer['start']);
+        _endTime = DateTime.now();
+      }
+    } else if (widget.editItem != null) {
       final item = widget.editItem!;
       if (item['start'] != null) {
         _startTime = DateTimeUtils.parseServerTime(item['start']);
@@ -1024,13 +1073,24 @@ class _TummyTimeOptionsState extends State<TummyTimeOptions> {
         await ApiService.updateTummyTime(widget.editItem!['id'], data);
         Fluttertoast.showToast(msg: '俯卧时间已更新');
       } else {
-        await ApiService.addTummyTime(
-          widget.childId,
-          DateTimeUtils.formatForApi(_startTime),
-          DateTimeUtils.formatForApi(_endTime),
-          milestone: _milestoneController.text.isNotEmpty ? _milestoneController.text : null,
-          notes: _notesController.text.isNotEmpty ? _notesController.text : null,
-        );
+        if (widget.timer != null) {
+          await ApiService.addTummyTime(
+            widget.childId,
+            DateTimeUtils.formatForApi(_startTime),
+            DateTimeUtils.formatForApi(_endTime),
+            timer: widget.timer!['id'] as int,
+            milestone: _milestoneController.text.isNotEmpty ? _milestoneController.text : null,
+            notes: _notesController.text.isNotEmpty ? _notesController.text : null,
+          );
+        } else {
+          await ApiService.addTummyTime(
+            widget.childId,
+            DateTimeUtils.formatForApi(_startTime),
+            DateTimeUtils.formatForApi(_endTime),
+            milestone: _milestoneController.text.isNotEmpty ? _milestoneController.text : null,
+            notes: _notesController.text.isNotEmpty ? _notesController.text : null,
+          );
+        }
         Fluttertoast.showToast(msg: '俯卧时间已添加');
       }
       widget.onSaved();

@@ -7,6 +7,8 @@ import 'package:babybuddy_app/screens/quick_add.dart';
 import 'package:babybuddy_app/screens/about_screen.dart';
 import 'package:babybuddy_app/utils/storage.dart';
 import 'package:babybuddy_app/utils/date_time_utils.dart';
+import 'package:babybuddy_app/utils/timer_manager.dart';
+import 'package:babybuddy_app/widgets/timer_card.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,11 +25,13 @@ class _HomeScreenState extends State<HomeScreen> {
   int? _selectedChildId;
   String? _serverUrl;
   bool _hasSelectedChild = false;
+  List _timers = [];
 
   @override
   void initState() {
     super.initState();
     loadTimeline();
+    loadTimers();
   }
 
   Future<void> loadTimeline() async {
@@ -78,6 +82,40 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> loadTimers() async {
+    final childId = await Storage.getChildId();
+    if (childId == null) return;
+
+    try {
+      await TimerManager().loadTimers(childId: childId);
+      TimerManager().timersStream.listen((timers) {
+        if (mounted) {
+          setState(() => _timers = timers);
+        }
+      });
+    } catch (e) {
+      print('加载定时器失败: $e');
+    }
+  }
+
+  Future<void> createTimer() async {
+    if (_selectedChildId == null) {
+      Fluttertoast.showToast(msg: '请先选择宝宝');
+      return;
+    }
+
+    try {
+      await TimerManager().createTimer(childId: _selectedChildId);
+      if (mounted) {
+        Fluttertoast.showToast(msg: '定时器已启动');
+      }
+    } catch (e) {
+      if (mounted) {
+        Fluttertoast.showToast(msg: '启动定时器失败: $e');
+      }
     }
   }
 
@@ -470,9 +508,35 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: _hasSelectedChild
           ? FloatingActionButton(
-              onPressed: () async {
-                await Navigator.push(context, MaterialPageRoute(builder: (_) => const QuickAdd()));
-                loadTimeline();
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  builder: (context) => SafeArea(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ListTile(
+                          leading: const Icon(Icons.timer),
+                          title: const Text('启动定时器'),
+                          onTap: () async {
+                            Navigator.pop(context);
+                            await createTimer();
+                          },
+                        ),
+                        const Divider(),
+                        ListTile(
+                          leading: const Icon(Icons.add_circle_outline),
+                          title: const Text('添加记录'),
+                          onTap: () async {
+                            Navigator.pop(context);
+                            await Navigator.push(context, MaterialPageRoute(builder: (_) => const QuickAdd()));
+                            loadTimeline();
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                );
               },
               child: const Icon(Icons.add),
             )
@@ -598,9 +662,19 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
+        if (_timers.isNotEmpty) ..._buildTimersList(),
         Expanded(child: _buildTimelineList()),
       ],
     );
+  }
+
+  List<Widget> _buildTimersList() {
+    return _timers.map((timer) => TimerCard(
+      timer: timer,
+      selectedChildId: _selectedChildId,
+      onTimerStopped: () => loadTimeline(),
+      onTimerUsed: () => loadTimeline(),
+    )).toList();
   }
 
   Widget _buildTimelineList() {
