@@ -30,6 +30,7 @@ class _QuickAddState extends State<QuickAdd> {
     }
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       builder: (context) => FeedingOptions(
         childId: childId!,
         onSaved: () {
@@ -47,6 +48,7 @@ class _QuickAddState extends State<QuickAdd> {
     }
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       builder: (context) => SleepOptions(
         childId: childId!,
         onSaved: () {
@@ -64,7 +66,80 @@ class _QuickAddState extends State<QuickAdd> {
     }
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       builder: (context) => DiaperOptions(
+        childId: childId!,
+        onSaved: () {
+          Navigator.pop(context);
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
+  void _showTummyTimeOptions() {
+    if (childId == null) {
+      Fluttertoast.showToast(msg: '请先选择宝宝');
+      return;
+    }
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => TummyTimeOptions(
+        childId: childId!,
+        onSaved: () {
+          Navigator.pop(context);
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
+  void _showPumpingOptions() {
+    if (childId == null) {
+      Fluttertoast.showToast(msg: '请先选择宝宝');
+      return;
+    }
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => PumpingOptions(
+        childId: childId!,
+        onSaved: () {
+          Navigator.pop(context);
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
+  void _showNoteOptions() {
+    if (childId == null) {
+      Fluttertoast.showToast(msg: '请先选择宝宝');
+      return;
+    }
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => NoteOptions(
+        childId: childId!,
+        onSaved: () {
+          Navigator.pop(context);
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
+  void _showMeasurementOptions() {
+    if (childId == null) {
+      Fluttertoast.showToast(msg: '请先选择宝宝');
+      return;
+    }
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => MeasurementOptions(
         childId: childId!,
         onSaved: () {
           Navigator.pop(context);
@@ -78,11 +153,10 @@ class _QuickAddState extends State<QuickAdd> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('快速记录')),
-      body: Center(
-        child: _isLoading
-          ? const CircularProgressIndicator()
-          : Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : ListView(
+              padding: const EdgeInsets.all(16),
               children: [
                 _buildQuickAction(
                   icon: Icons.restaurant,
@@ -90,23 +164,50 @@ class _QuickAddState extends State<QuickAdd> {
                   color: Colors.orange,
                   onTap: _showFeedingOptions,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 _buildQuickAction(
                   icon: Icons.bedtime,
                   label: '睡眠',
                   color: Colors.blue,
                   onTap: _showSleepOptions,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 _buildQuickAction(
                   icon: Icons.baby_changing_station,
                   label: '尿布',
                   color: Colors.yellow,
                   onTap: _showDiaperOptions,
                 ),
+                const SizedBox(height: 12),
+                _buildQuickAction(
+                  icon: Icons.self_improvement,
+                  label: '俯卧时间',
+                  color: Colors.green,
+                  onTap: _showTummyTimeOptions,
+                ),
+                const SizedBox(height: 12),
+                _buildQuickAction(
+                  icon: Icons.water_drop,
+                  label: '吸奶',
+                  color: Colors.purple,
+                  onTap: _showPumpingOptions,
+                ),
+                const SizedBox(height: 12),
+                _buildQuickAction(
+                  icon: Icons.note,
+                  label: '笔记',
+                  color: Colors.teal,
+                  onTap: _showNoteOptions,
+                ),
+                const SizedBox(height: 12),
+                _buildQuickAction(
+                  icon: Icons.monitor_weight,
+                  label: '身体测量',
+                  color: Colors.deepPurple,
+                  onTap: _showMeasurementOptions,
+                ),
               ],
             ),
-      ),
     );
   }
 
@@ -120,21 +221,20 @@ class _QuickAddState extends State<QuickAdd> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: color.withOpacity(0.3)),
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 32, color: color),
             const SizedBox(width: 16),
             Text(
               label,
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: color,
               ),
@@ -165,6 +265,7 @@ class _FeedingOptionsState extends State<FeedingOptions> {
   DateTime _startTime = DateTime.now();
   DateTime _endTime = DateTime.now().add(const Duration(minutes: 20));
   bool _isLoading = false;
+  final TextEditingController _amountController = TextEditingController();
 
   final _feedingTypes = const ['breast milk', 'formula', 'fortified breast milk', 'pumped milk'];
   final _feedingMethods = const ['left breast', 'right breast', 'both breasts', 'bottle', 'spoon'];
@@ -172,12 +273,19 @@ class _FeedingOptionsState extends State<FeedingOptions> {
   Future<void> _save() async {
     setState(() => _isLoading = true);
     try {
+      double? amount;
+      if (_amountController.text.isNotEmpty) {
+        amount = double.tryParse(_amountController.text);
+      }
+      
       await ApiService.addFeeding(
         widget.childId,
         DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(_startTime),
         DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(_endTime),
         _selectedType,
         _selectedMethod,
+        amount: amount,
+        amountUnit: 'ml',
       );
       Fluttertoast.showToast(msg: '喂奶记录已添加');
       widget.onSaved();
@@ -197,40 +305,56 @@ class _FeedingOptionsState extends State<FeedingOptions> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            '记录喂奶',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '记录喂奶',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          const SizedBox(height: 24),
-          _buildSection('喂养类型'),
-          const SizedBox(height: 8),
-          _buildOptions(_feedingTypes, _selectedType, (v) => setState(() => _selectedType = v)),
-          const SizedBox(height: 16),
-          _buildSection('喂养方式'),
-          const SizedBox(height: 8),
-          _buildOptions(_feedingMethods, _selectedMethod, (v) => setState(() => _selectedMethod = v)),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              onPressed: _isLoading ? null : _save,
-              child: _isLoading ? const CircularProgressIndicator() : const Text('保存记录'),
+            const SizedBox(height: 24),
+            _buildSection('喂养类型'),
+            const SizedBox(height: 8),
+            _buildOptions(_feedingTypes, _selectedType, (v) => setState(() => _selectedType = v)),
+            const SizedBox(height: 16),
+            _buildSection('喂养方式'),
+            const SizedBox(height: 8),
+            _buildOptions(_feedingMethods, _selectedMethod, (v) => setState(() => _selectedMethod = v)),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _amountController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: '奶量 (ml)',
+                border: OutlineInputBorder(),
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _save,
+                child: _isLoading ? const CircularProgressIndicator() : const Text('保存记录'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -255,8 +379,6 @@ class _FeedingOptionsState extends State<FeedingOptions> {
           label: Text(option),
           selected: isSelected,
           onSelected: (_) => onChanged(option),
-          backgroundColor: Colors.grey[100],
-          selectedColor: Colors.blue[100],
         );
       }).toList(),
     );
@@ -279,6 +401,7 @@ class SleepOptions extends StatefulWidget {
 class _SleepOptionsState extends State<SleepOptions> {
   DateTime _startTime = DateTime.now();
   DateTime _endTime = DateTime.now().add(const Duration(hours: 2));
+  bool _isNap = false;
   bool _isLoading = false;
 
   Future<void> _save() async {
@@ -288,6 +411,7 @@ class _SleepOptionsState extends State<SleepOptions> {
         widget.childId,
         DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(_startTime),
         DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(_endTime),
+        nap: _isNap,
       );
       Fluttertoast.showToast(msg: '睡眠记录已添加');
       widget.onSaved();
@@ -307,37 +431,49 @@ class _SleepOptionsState extends State<SleepOptions> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            '记录睡眠',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '记录睡眠',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            '时间会自动设置为现在和2小时后（默认），可以根据需要修改',
-            style: TextStyle(color: Colors.grey),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              onPressed: _isLoading ? null : _save,
-              child: _isLoading ? const CircularProgressIndicator() : const Text('保存记录'),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                const Text('小睡'),
+                Switch(
+                  value: _isNap,
+                  onChanged: (v) => setState(() => _isNap = v),
+                ),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _save,
+                child: _isLoading ? const CircularProgressIndicator() : const Text('保存记录'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -391,49 +527,56 @@ class _DiaperOptionsState extends State<DiaperOptions> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            '记录尿布',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 24),
-          _buildSection('类型'),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: _buildCheckbox('湿', _wet, (v) => setState(() => _wet = v ?? true)),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '记录尿布',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
               ),
-              Expanded(
-                child: _buildCheckbox('干/便便', _solid, (v) => setState(() => _solid = v ?? false)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildSection('颜色'),
-          const SizedBox(height: 8),
-          _buildOptions(_colors, _selectedColor, (v) => setState(() => _selectedColor = v)),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              onPressed: _isLoading ? null : _save,
-              child: _isLoading ? const CircularProgressIndicator() : const Text('保存记录'),
             ),
-          ),
-        ],
+            const SizedBox(height: 24),
+            _buildSection('类型'),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildCheckbox('湿', _wet, (v) => setState(() => _wet = v ?? true)),
+                ),
+                Expanded(
+                  child: _buildCheckbox('干/便便', _solid, (v) => setState(() => _solid = v ?? false)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _buildSection('颜色'),
+            const SizedBox(height: 8),
+            _buildOptions(_colors, _selectedColor, (v) => setState(() => _selectedColor = v)),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _save,
+                child: _isLoading ? const CircularProgressIndicator() : const Text('保存记录'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -467,10 +610,434 @@ class _DiaperOptionsState extends State<DiaperOptions> {
           label: Text(option),
           selected: isSelected,
           onSelected: (_) => onChanged(option),
-          backgroundColor: Colors.grey[100],
-          selectedColor: Colors.blue[100],
         );
       }).toList(),
+    );
+  }
+}
+
+class TummyTimeOptions extends StatefulWidget {
+  final int childId;
+  final VoidCallback onSaved;
+  const TummyTimeOptions({
+    super.key,
+    required this.childId,
+    required this.onSaved,
+  });
+
+  @override
+  State<TummyTimeOptions> createState() => _TummyTimeOptionsState();
+}
+
+class _TummyTimeOptionsState extends State<TummyTimeOptions> {
+  DateTime _startTime = DateTime.now();
+  DateTime _endTime = DateTime.now().add(const Duration(minutes: 10));
+  final TextEditingController _milestoneController = TextEditingController();
+  bool _isLoading = false;
+
+  Future<void> _save() async {
+    setState(() => _isLoading = true);
+    try {
+      await ApiService.addTummyTime(
+        widget.childId,
+        DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(_startTime),
+        DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(_endTime),
+        milestone: _milestoneController.text.isNotEmpty ? _milestoneController.text : null,
+      );
+      Fluttertoast.showToast(msg: '俯卧时间已添加');
+      widget.onSaved();
+    } catch (e) {
+      if (mounted) {
+        Fluttertoast.showToast(
+          msg: '添加失败: $e',
+          backgroundColor: Colors.red,
+          toastLength: Toast.LENGTH_LONG,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '记录俯卧时间',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              controller: _milestoneController,
+              decoration: const InputDecoration(
+                labelText: '里程碑 (可选)',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _save,
+                child: _isLoading ? const CircularProgressIndicator() : const Text('保存记录'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class PumpingOptions extends StatefulWidget {
+  final int childId;
+  final VoidCallback onSaved;
+  const PumpingOptions({
+    super.key,
+    required this.childId,
+    required this.onSaved,
+  });
+
+  @override
+  State<PumpingOptions> createState() => _PumpingOptionsState();
+}
+
+class _PumpingOptionsState extends State<PumpingOptions> {
+  DateTime _startTime = DateTime.now();
+  DateTime _endTime = DateTime.now().add(const Duration(minutes: 15));
+  final TextEditingController _amountController = TextEditingController();
+  bool _isLoading = false;
+
+  Future<void> _save() async {
+    setState(() => _isLoading = true);
+    try {
+      double? amount;
+      if (_amountController.text.isNotEmpty) {
+        amount = double.tryParse(_amountController.text);
+      }
+      
+      await ApiService.addPumping(
+        widget.childId,
+        DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(_startTime),
+        DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(_endTime),
+        amount: amount,
+        amountUnit: 'ml',
+      );
+      Fluttertoast.showToast(msg: '吸奶记录已添加');
+      widget.onSaved();
+    } catch (e) {
+      if (mounted) {
+        Fluttertoast.showToast(
+          msg: '添加失败: $e',
+          backgroundColor: Colors.red,
+          toastLength: Toast.LENGTH_LONG,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '记录吸奶',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              controller: _amountController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: '奶量 (ml)',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _save,
+                child: _isLoading ? const CircularProgressIndicator() : const Text('保存记录'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class NoteOptions extends StatefulWidget {
+  final int childId;
+  final VoidCallback onSaved;
+  const NoteOptions({
+    super.key,
+    required this.childId,
+    required this.onSaved,
+  });
+
+  @override
+  State<NoteOptions> createState() => _NoteOptionsState();
+}
+
+class _NoteOptionsState extends State<NoteOptions> {
+  final TextEditingController _noteController = TextEditingController();
+  bool _isLoading = false;
+
+  Future<void> _save() async {
+    if (_noteController.text.isEmpty) {
+      Fluttertoast.showToast(msg: '请输入笔记内容');
+      return;
+    }
+    
+    setState(() => _isLoading = true);
+    try {
+      await ApiService.addNote(
+        widget.childId,
+        _noteController.text,
+      );
+      Fluttertoast.showToast(msg: '笔记已添加');
+      widget.onSaved();
+    } catch (e) {
+      if (mounted) {
+        Fluttertoast.showToast(
+          msg: '添加失败: $e',
+          backgroundColor: Colors.red,
+          toastLength: Toast.LENGTH_LONG,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '添加笔记',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              controller: _noteController,
+              maxLines: 5,
+              decoration: const InputDecoration(
+                labelText: '笔记内容',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _save,
+                child: _isLoading ? const CircularProgressIndicator() : const Text('保存笔记'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class MeasurementOptions extends StatefulWidget {
+  final int childId;
+  final VoidCallback onSaved;
+  const MeasurementOptions({
+    super.key,
+    required this.childId,
+    required this.onSaved,
+  });
+
+  @override
+  State<MeasurementOptions> createState() => _MeasurementOptionsState();
+}
+
+class _MeasurementOptionsState extends State<MeasurementOptions> {
+  final TextEditingController _weightController = TextEditingController();
+  final TextEditingController _heightController = TextEditingController();
+  final TextEditingController _headCircController = TextEditingController();
+  bool _isLoading = false;
+
+  Future<void> _save() async {
+    if (_weightController.text.isEmpty && 
+        _heightController.text.isEmpty && 
+        _headCircController.text.isEmpty) {
+      Fluttertoast.showToast(msg: '请至少输入一项测量值');
+      return;
+    }
+    
+    setState(() => _isLoading = true);
+    try {
+      final date = DateFormat("yyyy-MM-dd").format(DateTime.now());
+      
+      if (_weightController.text.isNotEmpty) {
+        await ApiService.addWeight(
+          widget.childId,
+          date,
+          double.parse(_weightController.text),
+          weightUnit: 'kg',
+        );
+      }
+      
+      if (_heightController.text.isNotEmpty) {
+        await ApiService.addHeight(
+          widget.childId,
+          date,
+          double.parse(_heightController.text),
+          heightUnit: 'cm',
+        );
+      }
+      
+      if (_headCircController.text.isNotEmpty) {
+        await ApiService.addHeadCircumference(
+          widget.childId,
+          date,
+          double.parse(_headCircController.text),
+          circumferenceUnit: 'cm',
+        );
+      }
+      
+      Fluttertoast.showToast(msg: '测量记录已添加');
+      widget.onSaved();
+    } catch (e) {
+      if (mounted) {
+        Fluttertoast.showToast(
+          msg: '添加失败: $e',
+          backgroundColor: Colors.red,
+          toastLength: Toast.LENGTH_LONG,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '记录身体测量',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              controller: _weightController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(
+                labelText: '体重 (kg)',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _heightController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(
+                labelText: '身高 (cm)',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _headCircController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(
+                labelText: '头围 (cm)',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _save,
+                child: _isLoading ? const CircularProgressIndicator() : const Text('保存记录'),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
