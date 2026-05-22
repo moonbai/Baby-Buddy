@@ -8,28 +8,21 @@ class ApiService {
   static String? _baseUrl;
   static Map<String, String> _cookies = {};
   static String? _csrfToken;
-  static bool _isInitialized = false;
 
   static Future<void> init() async {
-    if (_isInitialized) {
-      await resetInterceptor();
-      return;
-    }
-    
     _baseUrl = await Storage.getServerUrl();
     final baseUrl = _baseUrl ?? 'http://127.0.0.1:8000';
-    
+
     dio = Dio(BaseOptions(
       baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 60),
-      receiveTimeout: const Duration(seconds: 60),
-      sendTimeout: const Duration(seconds: 60),
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json, text/html',
+        'Accept': 'application/json',
       },
     ));
-    
+
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
         if (_cookies.isNotEmpty) {
@@ -53,84 +46,45 @@ class ApiService {
         }
         return handler.next(response);
       },
-      onError: (error, handler) {
-        print('API Error: ${error.response?.statusCode} - ${error.message}');
-        if (error.response?.data != null) {
-          print('Response data: ${error.response?.data}');
-        }
-        return handler.next(error);
-      },
     ));
-    
-    final token = await Storage.getToken();
-    if (token != null && token.isNotEmpty) {
-      _addAuthInterceptor(token);
-    }
-    
-    _isInitialized = true;
-  }
 
-  static void _addAuthInterceptor(String token) {
-    for (var interceptor in dio.interceptors) {
-      if (interceptor is AuthInterceptor) {
-        return;
-      }
-    }
-    dio.interceptors.add(AuthInterceptor(token));
-  }
-
-  static Future<void> resetInterceptor() async {
     final token = await Storage.getToken();
-    if (token != null && token.isNotEmpty) {
-      _addAuthInterceptor(token);
+    if (token != null) {
+      dio.interceptors.add(AuthInterceptor(token));
     }
   }
 
   static Future<String?> login(String username, String password) async {
     try {
-      print('=== 开始登录流程 ===');
-      
-      if (!_isInitialized) {
-        await init();
-      }
-      
-      print('Step 1: 访问 /login/ 获取CSRF token');
       final loginPageResponse = await dio.get(
         '/login/',
         options: Options(
           headers: {
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept': 'text/html,application/xhtml+xml',
           },
           responseType: ResponseType.plain,
         ),
       );
-      
-      print('登录页面状态码: ${loginPageResponse.statusCode}');
-      
-      final html = loginPageResponse.data.toString();
+
+      final html = loginPageResponse.data;
       final document = html_parser.parse(html);
       final csrfElement = document.querySelector('input[name="csrfmiddlewaretoken"]');
-      
       if (csrfElement == null) {
-        throw Exception('无法找到CSRF token，请确认登录页面URL正确');
+        throw Exception('无法找到CSRF token');
       }
-      
       _csrfToken = csrfElement.attributes['value'];
-      
-      if (_csrfToken == null || _csrfToken!.isEmpty) {
+
+      if (_csrfToken == null) {
         throw Exception('CSRF token为空');
       }
-      
-      print('CSRF token获取成功');
-      
-      print('Step 2: 发送登录请求到 /login/');
+
       final formData = {
         'csrfmiddlewaretoken': _csrfToken,
         'username': username,
         'password': password,
         'next': '/',
       };
-      
+
       final loginResponse = await dio.post(
         '/login/',
         data: FormData.fromMap(formData),
@@ -138,53 +92,36 @@ class ApiService {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
             'Referer': '${_baseUrl ?? ''}/login/',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
           },
-          validateStatus: (status) => status != null && status < 600,
+          validateStatus: (status) => status != null && status < 500,
         ),
       );
-      
-      print('登录请求状态码: ${loginResponse.statusCode}');
-      
+
       if (loginResponse.statusCode == 403) {
         throw Exception('用户名或密码错误');
       }
-      
-      if (loginResponse.statusCode == 500) {
-        throw Exception('服务器内部错误 (500)');
-      }
-      
-      if (loginResponse.statusCode != 200 && 
+
+      if (loginResponse.statusCode != 200 &&
           !(loginResponse.statusCode! >= 300 && loginResponse.statusCode! <= 307)) {
         throw Exception('登录失败 (状态码: ${loginResponse.statusCode})');
       }
-      
-      print('登录请求成功');
-      
-      print('Step 3: 获取API key');
-      
+
       final profileResponse = await dio.get(
-        '/api/profile',
+        '/api/profile/',
         options: Options(
           headers: {
             'Accept': 'application/json',
           },
         ),
       );
-      
-      print('Profile API状态码: ${profileResponse.statusCode}');
-      print('Profile数据: ${profileResponse.data}');
-      
+
       if (profileResponse.statusCode == 200 && profileResponse.data != null) {
         final profileData = profileResponse.data;
         if (profileData['api_key'] != null) {
-          print('成功获取到API key');
-          final token = profileData['api_key'] as String;
-          _addAuthInterceptor(token);
-          return token;
+          return profileData['api_key'] as String;
         }
       }
-      
+
       throw Exception('无法获取API key');
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionTimeout) {
@@ -192,17 +129,14 @@ class ApiService {
       } else if (e.type == DioExceptionType.connectionError) {
         throw Exception('无法连接到服务器，请检查服务器地址和网络');
       } else if (e.response?.statusCode == 404) {
-        throw Exception('服务器地址错误，找不到API端点');
+        throw Exception('服务器地址错误，请确认URL正确');
       } else if (e.response?.statusCode == 500) {
-        throw Exception('服务器内部错误 (500)');
+        throw Exception('服务器内部错误，请确认Baby Buddy版本正确');
       } else {
-        print('DioException: $e');
-        print('Response: ${e.response?.data}');
         throw Exception('登录失败: ${e.message}');
       }
     } catch (e) {
-      print('Exception: $e');
-      rethrow;
+      throw Exception('登录失败: $e');
     }
   }
 
@@ -211,7 +145,7 @@ class ApiService {
       final query = <String, dynamic>{};
       if (limit != null) query['limit'] = limit;
       if (offset != null) query['offset'] = offset;
-      
+
       final response = await dio.get('/api/children/', queryParameters: query);
       if (response.data != null && response.data['results'] != null) {
         return response.data['results'] as List;
@@ -237,7 +171,7 @@ class ApiService {
       if (limit != null) query['limit'] = limit;
       if (offset != null) query['offset'] = offset;
       if (childId != null) query['child'] = childId;
-      
+
       final response = await dio.get('/api/changes/', queryParameters: query);
       if (response.data != null && response.data['results'] != null) {
         return response.data['results'] as List;
@@ -258,11 +192,9 @@ class ApiService {
         'color': color,
       };
       if (notes != null) data['notes'] = notes;
-      
-      print('添加尿布记录: $data');
+
       await dio.post('/api/changes/', data: data);
     } catch (e) {
-      print('添加尿布记录失败: $e');
       throw Exception('添加尿布记录失败: $e');
     }
   }
@@ -289,7 +221,7 @@ class ApiService {
       if (limit != null) query['limit'] = limit;
       if (offset != null) query['offset'] = offset;
       if (childId != null) query['child'] = childId;
-      
+
       final response = await dio.get('/api/feedings/', queryParameters: query);
       if (response.data != null && response.data['results'] != null) {
         return response.data['results'] as List;
@@ -313,11 +245,9 @@ class ApiService {
       if (timer != null) data['timer'] = timer;
       if (amount != null) data['amount'] = amount;
       if (amountUnit != null) data['amount_unit'] = amountUnit;
-      
-      print('添加喂奶记录: $data');
+
       await dio.post('/api/feedings/', data: data);
     } catch (e) {
-      print('添加喂奶记录失败: $e');
       throw Exception('添加喂奶记录失败: $e');
     }
   }
@@ -344,7 +274,7 @@ class ApiService {
       if (limit != null) query['limit'] = limit;
       if (offset != null) query['offset'] = offset;
       if (childId != null) query['child'] = childId;
-      
+
       final response = await dio.get('/api/sleep/', queryParameters: query);
       if (response.data != null && response.data['results'] != null) {
         return response.data['results'] as List;
@@ -365,11 +295,9 @@ class ApiService {
       if (notes != null) data['notes'] = notes;
       if (nap != null) data['nap'] = nap;
       if (timer != null) data['timer'] = timer;
-      
-      print('添加睡眠记录: $data');
+
       await dio.post('/api/sleep/', data: data);
     } catch (e) {
-      print('添加睡眠记录失败: $e');
       throw Exception('添加睡眠记录失败: $e');
     }
   }
@@ -396,7 +324,7 @@ class ApiService {
       if (limit != null) query['limit'] = limit;
       if (offset != null) query['offset'] = offset;
       if (childId != null) query['child'] = childId;
-      
+
       final response = await dio.get('/api/tummy-times/', queryParameters: query);
       if (response.data != null && response.data['results'] != null) {
         return response.data['results'] as List;
@@ -417,11 +345,9 @@ class ApiService {
       if (milestone != null) data['milestone'] = milestone;
       if (notes != null) data['notes'] = notes;
       if (timer != null) data['timer'] = timer;
-      
-      print('添加俯卧时间记录: $data');
+
       await dio.post('/api/tummy-times/', data: data);
     } catch (e) {
-      print('添加俯卧时间记录失败: $e');
       throw Exception('添加俯卧时间记录失败: $e');
     }
   }
@@ -432,7 +358,7 @@ class ApiService {
       if (limit != null) query['limit'] = limit;
       if (offset != null) query['offset'] = offset;
       if (childId != null) query['child'] = childId;
-      
+
       final response = await dio.get('/api/pumping/', queryParameters: query);
       if (response.data != null && response.data['results'] != null) {
         return response.data['results'] as List;
@@ -453,11 +379,9 @@ class ApiService {
       if (amount != null) data['amount'] = amount;
       if (amountUnit != null) data['amount_unit'] = amountUnit;
       if (notes != null) data['notes'] = notes;
-      
-      print('添加吸奶记录: $data');
+
       await dio.post('/api/pumping/', data: data);
     } catch (e) {
-      print('添加吸奶记录失败: $e');
       throw Exception('添加吸奶记录失败: $e');
     }
   }
@@ -468,7 +392,7 @@ class ApiService {
       if (limit != null) query['limit'] = limit;
       if (offset != null) query['offset'] = offset;
       if (childId != null) query['child'] = childId;
-      
+
       final response = await dio.get('/api/notes/', queryParameters: query);
       if (response.data != null && response.data['results'] != null) {
         return response.data['results'] as List;
@@ -486,11 +410,9 @@ class ApiService {
         'note': note,
       };
       if (time != null) data['time'] = time;
-      
-      print('添加笔记: $data');
+
       await dio.post('/api/notes/', data: data);
     } catch (e) {
-      print('添加笔记失败: $e');
       throw Exception('添加笔记失败: $e');
     }
   }
@@ -517,7 +439,7 @@ class ApiService {
       if (limit != null) query['limit'] = limit;
       if (offset != null) query['offset'] = offset;
       if (childId != null) query['child'] = childId;
-      
+
       final response = await dio.get('/api/weight/', queryParameters: query);
       if (response.data != null && response.data['results'] != null) {
         return response.data['results'] as List;
@@ -537,11 +459,9 @@ class ApiService {
       };
       if (weightUnit != null) data['weight_unit'] = weightUnit;
       if (notes != null) data['notes'] = notes;
-      
-      print('添加体重记录: $data');
+
       await dio.post('/api/weight/', data: data);
     } catch (e) {
-      print('添加体重记录失败: $e');
       throw Exception('添加体重记录失败: $e');
     }
   }
@@ -552,7 +472,7 @@ class ApiService {
       if (limit != null) query['limit'] = limit;
       if (offset != null) query['offset'] = offset;
       if (childId != null) query['child'] = childId;
-      
+
       final response = await dio.get('/api/height/', queryParameters: query);
       if (response.data != null && response.data['results'] != null) {
         return response.data['results'] as List;
@@ -572,11 +492,9 @@ class ApiService {
       };
       if (heightUnit != null) data['height_unit'] = heightUnit;
       if (notes != null) data['notes'] = notes;
-      
-      print('添加身高记录: $data');
+
       await dio.post('/api/height/', data: data);
     } catch (e) {
-      print('添加身高记录失败: $e');
       throw Exception('添加身高记录失败: $e');
     }
   }
@@ -587,7 +505,7 @@ class ApiService {
       if (limit != null) query['limit'] = limit;
       if (offset != null) query['offset'] = offset;
       if (childId != null) query['child'] = childId;
-      
+
       final response = await dio.get('/api/head-circumference/', queryParameters: query);
       if (response.data != null && response.data['results'] != null) {
         return response.data['results'] as List;
@@ -607,11 +525,9 @@ class ApiService {
       };
       if (circumferenceUnit != null) data['circumference_unit'] = circumferenceUnit;
       if (notes != null) data['notes'] = notes;
-      
-      print('添加头围记录: $data');
+
       await dio.post('/api/head-circumference/', data: data);
     } catch (e) {
-      print('添加头围记录失败: $e');
       throw Exception('添加头围记录失败: $e');
     }
   }
@@ -622,7 +538,7 @@ class ApiService {
       if (limit != null) query['limit'] = limit;
       if (offset != null) query['offset'] = offset;
       if (childId != null) query['child'] = childId;
-      
+
       final response = await dio.get('/api/bmi/', queryParameters: query);
       if (response.data != null && response.data['results'] != null) {
         return response.data['results'] as List;
@@ -641,11 +557,9 @@ class ApiService {
         'bmi': bmi,
       };
       if (notes != null) data['notes'] = notes;
-      
-      print('添加BMI记录: $data');
+
       await dio.post('/api/bmi/', data: data);
     } catch (e) {
-      print('添加BMI记录失败: $e');
       throw Exception('添加BMI记录失败: $e');
     }
   }
@@ -656,7 +570,7 @@ class ApiService {
       if (limit != null) query['limit'] = limit;
       if (offset != null) query['offset'] = offset;
       if (childId != null) query['child'] = childId;
-      
+
       final response = await dio.get('/api/temperature/', queryParameters: query);
       if (response.data != null && response.data['results'] != null) {
         return response.data['results'] as List;
@@ -676,11 +590,9 @@ class ApiService {
       };
       if (temperatureUnit != null) data['temperature_unit'] = temperatureUnit;
       if (notes != null) data['notes'] = notes;
-      
-      print('添加体温记录: $data');
+
       await dio.post('/api/temperature/', data: data);
     } catch (e) {
-      print('添加体温记录失败: $e');
       throw Exception('添加体温记录失败: $e');
     }
   }
@@ -691,7 +603,7 @@ class ApiService {
       if (limit != null) query['limit'] = limit;
       if (offset != null) query['offset'] = offset;
       if (childId != null) query['child'] = childId;
-      
+
       final response = await dio.get('/api/timers/', queryParameters: query);
       if (response.data != null && response.data['results'] != null) {
         return response.data['results'] as List;
@@ -708,12 +620,10 @@ class ApiService {
         'child': childId,
       };
       if (name != null) data['name'] = name;
-      
-      print('添加计时器: $data');
+
       final response = await dio.post('/api/timers/', data: data);
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      print('添加计时器失败: $e');
       throw Exception('添加计时器失败: $e');
     }
   }
@@ -750,7 +660,7 @@ class ApiService {
       ]);
 
       final List<dynamic> timeline = [];
-      
+
       for (final response in responses) {
         timeline.addAll(response);
       }
