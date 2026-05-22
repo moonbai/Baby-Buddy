@@ -54,9 +54,28 @@ android {
         versionName flutterVersionName
     }
 
+    signingConfigs {
+        release {
+            if (System.getenv("ANDROID_KEYSTORE_BASE64")) {
+                def keystoreFile = file("release.keystore")
+                if (!keystoreFile.exists()) {
+                    new FileOutputStream(keystoreFile).with {
+                        it.write(Base64.getDecoder().decode(System.getenv("ANDROID_KEYSTORE_BASE64")))
+                    }
+                }
+                storeFile = keystoreFile
+                storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+            } else {
+                signingConfig signingConfigs.debug
+            }
+        }
+    }
+
     buildTypes {
         release {
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
         }
     }
 }
