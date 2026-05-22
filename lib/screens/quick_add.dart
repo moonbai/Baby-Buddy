@@ -4,6 +4,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:babybuddy_app/api/api_service.dart';
 import 'package:babybuddy_app/utils/storage.dart';
+import 'package:babybuddy_app/utils/date_time_utils.dart';
 
 class QuickAdd extends StatefulWidget {
   final Map<String, dynamic>? editItem;
@@ -154,8 +155,6 @@ class _QuickAddState extends State<QuickAdd> {
         Fluttertoast.showToast(msg: '该类型暂不支持编辑');
     }
   }
-
-  String fmt(DateTime t) => DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(t);
 
   void _showFeedingOptions() {
     if (childId == null) {
@@ -462,8 +461,8 @@ class _FeedingOptionsState extends State<FeedingOptions> {
       if (widget.editItem != null) {
         final data = <String, dynamic>{
           'child': widget.childId,
-          'start': DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(_startTime),
-          'end': DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(_endTime),
+          'start': DateTimeUtils.formatForApi(_startTime),
+          'end': DateTimeUtils.formatForApi(_endTime),
           'type': _selectedType,
           'method': _selectedMethod,
         };
@@ -479,8 +478,8 @@ class _FeedingOptionsState extends State<FeedingOptions> {
       } else {
         await ApiService.addFeeding(
           widget.childId,
-          DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(_startTime),
-          DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(_endTime),
+          DateTimeUtils.formatForApi(_startTime),
+          DateTimeUtils.formatForApi(_endTime),
           _selectedType,
           _selectedMethod,
           amount: amount,
@@ -659,8 +658,8 @@ class _SleepOptionsState extends State<SleepOptions> {
       if (widget.editItem != null) {
         final data = <String, dynamic>{
           'child': widget.childId,
-          'start': DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(_startTime),
-          'end': DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(_endTime),
+          'start': DateTimeUtils.formatForApi(_startTime),
+          'end': DateTimeUtils.formatForApi(_endTime),
           'nap': _isNap,
         };
         if (_notesController.text.isNotEmpty) {
@@ -671,8 +670,8 @@ class _SleepOptionsState extends State<SleepOptions> {
       } else {
         await ApiService.addSleep(
           widget.childId,
-          DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(_startTime),
-          DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(_endTime),
+          DateTimeUtils.formatForApi(_startTime),
+          DateTimeUtils.formatForApi(_endTime),
           nap: _isNap,
           notes: _notesController.text.isNotEmpty ? _notesController.text : null,
         );
@@ -815,7 +814,7 @@ class _DiaperOptionsState extends State<DiaperOptions> {
       if (widget.editItem != null) {
         final data = <String, dynamic>{
           'child': widget.childId,
-          'time': widget.editItem!['time'] ?? DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(DateTime.now()),
+          'time': widget.editItem!['time'] ?? DateTimeUtils.formatForApi(DateTime.now()),
           'wet': _wet,
           'solid': _solid,
           'color': _selectedColor,
@@ -828,7 +827,7 @@ class _DiaperOptionsState extends State<DiaperOptions> {
       } else {
         await ApiService.addDiaper(
           widget.childId,
-          DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(DateTime.now()),
+          DateTimeUtils.formatForApi(DateTime.now()),
           _wet,
           _solid,
           _selectedColor,
@@ -1013,8 +1012,8 @@ class _TummyTimeOptionsState extends State<TummyTimeOptions> {
       if (widget.editItem != null) {
         final data = <String, dynamic>{
           'child': widget.childId,
-          'start': DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(_startTime),
-          'end': DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(_endTime),
+          'start': DateTimeUtils.formatForApi(_startTime),
+          'end': DateTimeUtils.formatForApi(_endTime),
         };
         if (_milestoneController.text.isNotEmpty) {
           data['milestone'] = _milestoneController.text;
@@ -1027,8 +1026,8 @@ class _TummyTimeOptionsState extends State<TummyTimeOptions> {
       } else {
         await ApiService.addTummyTime(
           widget.childId,
-          DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(_startTime),
-          DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(_endTime),
+          DateTimeUtils.formatForApi(_startTime),
+          DateTimeUtils.formatForApi(_endTime),
           milestone: _milestoneController.text.isNotEmpty ? _milestoneController.text : null,
           notes: _notesController.text.isNotEmpty ? _notesController.text : null,
         );
@@ -1172,8 +1171,8 @@ class _PumpingOptionsState extends State<PumpingOptions> {
       if (widget.editItem != null) {
         final data = <String, dynamic>{
           'child': widget.childId,
-          'start': DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(_startTime),
-          'end': DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(_endTime),
+          'start': DateTimeUtils.formatForApi(_startTime),
+          'end': DateTimeUtils.formatForApi(_endTime),
         };
         if (amount != null) {
           data['amount'] = amount;
@@ -1187,8 +1186,8 @@ class _PumpingOptionsState extends State<PumpingOptions> {
       } else {
         await ApiService.addPumping(
           widget.childId,
-          DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(_startTime),
-          DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(_endTime),
+          DateTimeUtils.formatForApi(_startTime),
+          DateTimeUtils.formatForApi(_endTime),
           amount: amount,
           amountUnit: 'ml',
           notes: _notesController.text.isNotEmpty ? _notesController.text : null,
@@ -1481,7 +1480,7 @@ class _MeasurementOptionsState extends State<MeasurementOptions> {
     setState(() => _isLoading = true);
     try {
       if (widget.editItem != null && _editingModel != null) {
-        final date = widget.editItem!['date'] ?? DateFormat("yyyy-MM-dd").format(DateTime.now());
+        final date = widget.editItem!['date'] ?? DateTimeUtils.formatDateOnly(DateTime.now());
         final time = widget.editItem!['time'];
         if (_editingModel == 'weight' && _weightController.text.isNotEmpty) {
           final data = <String, dynamic>{
@@ -1519,7 +1518,7 @@ class _MeasurementOptionsState extends State<MeasurementOptions> {
         } else if (_editingModel == 'temperature' && _tempController.text.isNotEmpty) {
           final data = <String, dynamic>{
             'child': widget.childId,
-            'time': time ?? DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(DateTime.now()),
+            'time': time ?? DateTimeUtils.formatForApi(DateTime.now()),
             'temperature': double.parse(_tempController.text),
             'temperature_unit': 'C',
           };
@@ -1530,8 +1529,8 @@ class _MeasurementOptionsState extends State<MeasurementOptions> {
         }
         Fluttertoast.showToast(msg: '测量记录已更新');
       } else {
-        final date = DateFormat("yyyy-MM-dd").format(DateTime.now());
-        final time = DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(DateTime.now());
+        final date = DateTimeUtils.formatDateOnly(DateTime.now());
+        final time = DateTimeUtils.formatForApi(DateTime.now());
         
         if (_weightController.text.isNotEmpty) {
           await ApiService.addWeight(
