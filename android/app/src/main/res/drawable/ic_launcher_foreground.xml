@@ -13,16 +13,13 @@
     <path
         android:fillColor="#FFE4C4"
         android:pathData="M54,30c-13.26,0 -24,10.74 -24,24s10.74,24 24,24 24,-10.74 24,-24 -10.74,-24 -24,-24Z"/>
-    <circle
+    <!-- 使用 path 绘制圆形眼睛，避免 radius 属性兼容性问题 -->
+    <path
         android:fillColor="#2A2A2A"
-        android:centerX="43"
-        android:centerY="48"
-        android:radius="4"/>
-    <circle
+        android:pathData="M43,48m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0"/>
+    <path
         android:fillColor="#2A2A2A"
-        android:centerX="65"
-        android:centerY="48"
-        android:radius="4"/>
+        android:pathData="M65,48m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0"/>
     <path
         android:fillColor="#FFB6C1"
         android:pathData="M38,62C34,58 34,52 38,48C42,52 42,58 38,62Z"/>
