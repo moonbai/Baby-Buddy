@@ -4,6 +4,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:babybuddy_app/api/api_service.dart';
 import 'package:babybuddy_app/screens/child_select.dart';
 import 'package:babybuddy_app/screens/quick_add.dart';
+import 'package:babybuddy_app/screens/about_screen.dart';
 import 'package:babybuddy_app/utils/storage.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -18,13 +19,19 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = false;
   String? _errorMessage;
   String? _selectedChildName;
-  String? _selectedChildId;
+  int? _selectedChildId;
   String? _serverUrl;
   bool _hasSelectedChild = false;
 
+  @override
+  void initState() {
+    super.initState();
+    loadTimeline();
+  }
+
   Future<void> loadTimeline() async {
     final childId = await Storage.getChildId();
-    
+
     if (childId == null) {
       setState(() {
         _hasSelectedChild = false;
@@ -53,7 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (selectedChild != null) {
         setState(() {
           _selectedChildName = '${selectedChild['first_name'] ?? ''} ${selectedChild['last_name'] ?? ''}'.trim();
-          _selectedChildId = childId.toString();
+          _selectedChildId = childId;
         });
       }
 
@@ -66,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _errorMessage = e.toString();
       });
       if (mounted) {
-        Fluttertoast.showToast(msg: '加载时间线失败');
+        Fluttertoast.showToast(msg: '加载时间线失败: $e');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -145,12 +152,6 @@ class _HomeScreenState extends State<HomeScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    loadTimeline();
   }
 
   String _getRecordTitle(dynamic item) {
@@ -411,15 +412,46 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('Baby Buddy'),
         actions: [
-          IconButton(
-            onPressed: () async {
-              await Navigator.push(context, MaterialPageRoute(builder: (_) => const ChildSelect()));
-              loadTimeline();
+          PopupMenuButton<String>(
+            onSelected: (value) async {
+              switch (value) {
+                case 'select_child':
+                  await Navigator.push(context, MaterialPageRoute(builder: (_) => const ChildSelect()));
+                  loadTimeline();
+                  break;
+                case 'about':
+                  await Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutScreen()));
+                  break;
+                case 'logout':
+                  logout();
+                  break;
+              }
             },
-            icon: const Icon(Icons.person),
-            tooltip: '选择宝宝',
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: 'select_child',
+                child: ListTile(
+                  leading: Icon(Icons.person),
+                  title: Text('选择宝宝'),
+                ),
+              ),
+              const PopupMenuItem<String>(
+                value: 'about',
+                child: ListTile(
+                  leading: Icon(Icons.info),
+                  title: Text('关于'),
+                ),
+              ),
+              const PopupMenuDivider(),
+              const PopupMenuItem<String>(
+                value: 'logout',
+                child: ListTile(
+                  leading: Icon(Icons.logout, color: Colors.red),
+                  title: Text('退出登录', style: TextStyle(color: Colors.red)),
+                ),
+              ),
+            ],
           ),
-          IconButton(onPressed: logout, icon: const Icon(Icons.logout)),
         ],
       ),
       floatingActionButton: _hasSelectedChild
@@ -452,7 +484,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 10),
             Text(
-              '点击右上角图标选择宝宝',
+              '点击右上角菜单选择宝宝',
               style: TextStyle(fontSize: 14, color: Colors.grey[500]),
             ),
             const SizedBox(height: 20),
@@ -512,7 +544,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   CircleAvatar(
                     backgroundColor: Theme.of(context).primaryColor,
                     child: Text(
-                      _selectedChildName![0].toUpperCase(),
+                      _selectedChildName != null && _selectedChildName!.isNotEmpty
+                          ? _selectedChildName![0].toUpperCase()
+                          : '?',
                       style: const TextStyle(color: Colors.white),
                     ),
                   ),
@@ -526,7 +560,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           style: TextStyle(fontSize: 12, color: Colors.grey),
                         ),
                         Text(
-                          _selectedChildName!,
+                          _selectedChildName ?? '未选择',
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                       ],
@@ -595,6 +629,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final timeStr = item['time'] ?? item['start'] ?? item['date'] ?? '';
     final time = _formatTime(timeStr);
     final model = item['model']?.toString() ?? '';
+    final canEditDelete = ['sleep', 'feeding', 'change', 'note'].contains(model);
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -625,18 +660,24 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: const TextStyle(fontSize: 14, height: 1.5),
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    if (model == 'sleep' || model == 'feeding' || model == 'change' || model == 'note')
+                if (canEditDelete)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      // TODO: 编辑功能待实现
+                      TextButton.icon(
+                        onPressed: () => Fluttertoast.showToast(msg: '编辑功能待实现'),
+                        icon: const Icon(Icons.edit, size: 18),
+                        label: const Text('编辑'),
+                      ),
                       TextButton.icon(
                         onPressed: () => deleteRecord(item),
                         icon: const Icon(Icons.delete, size: 18),
                         label: const Text('删除'),
                         style: TextButton.styleFrom(foregroundColor: Colors.red),
                       ),
-                  ],
-                ),
+                    ],
+                  ),
               ],
             ),
           ),

@@ -8,6 +8,7 @@ class ApiService {
   static String? _baseUrl;
   static Map<String, String> _cookies = {};
   static String? _csrfToken;
+  static AuthInterceptor? _authInterceptor;
 
   static Future<void> init() async {
     _baseUrl = await Storage.getServerUrl();
@@ -50,7 +51,8 @@ class ApiService {
 
     final token = await Storage.getToken();
     if (token != null) {
-      dio.interceptors.add(AuthInterceptor(token));
+      _authInterceptor = AuthInterceptor(token);
+      dio.interceptors.add(_authInterceptor!);
     }
   }
 
@@ -118,7 +120,16 @@ class ApiService {
       if (profileResponse.statusCode == 200 && profileResponse.data != null) {
         final profileData = profileResponse.data;
         if (profileData['api_key'] != null) {
-          return profileData['api_key'] as String;
+          final token = profileData['api_key'] as String;
+          await Storage.saveToken(token);
+          
+          if (_authInterceptor != null) {
+            dio.interceptors.remove(_authInterceptor);
+          }
+          _authInterceptor = AuthInterceptor(token);
+          dio.interceptors.add(_authInterceptor!);
+          
+          return token;
         }
       }
 
@@ -174,7 +185,12 @@ class ApiService {
 
       final response = await dio.get('/api/changes/', queryParameters: query);
       if (response.data != null && response.data['results'] != null) {
-        return response.data['results'] as List;
+        final results = response.data['results'] as List;
+        return results.map((item) {
+          final map = Map<String, dynamic>.from(item);
+          map['model'] = 'change';
+          return map;
+        }).toList();
       }
       return [];
     } catch (e) {
@@ -224,7 +240,12 @@ class ApiService {
 
       final response = await dio.get('/api/feedings/', queryParameters: query);
       if (response.data != null && response.data['results'] != null) {
-        return response.data['results'] as List;
+        final results = response.data['results'] as List;
+        return results.map((item) {
+          final map = Map<String, dynamic>.from(item);
+          map['model'] = 'feeding';
+          return map;
+        }).toList();
       }
       return [];
     } catch (e) {
@@ -277,7 +298,12 @@ class ApiService {
 
       final response = await dio.get('/api/sleep/', queryParameters: query);
       if (response.data != null && response.data['results'] != null) {
-        return response.data['results'] as List;
+        final results = response.data['results'] as List;
+        return results.map((item) {
+          final map = Map<String, dynamic>.from(item);
+          map['model'] = 'sleep';
+          return map;
+        }).toList();
       }
       return [];
     } catch (e) {
@@ -327,7 +353,12 @@ class ApiService {
 
       final response = await dio.get('/api/tummy-times/', queryParameters: query);
       if (response.data != null && response.data['results'] != null) {
-        return response.data['results'] as List;
+        final results = response.data['results'] as List;
+        return results.map((item) {
+          final map = Map<String, dynamic>.from(item);
+          map['model'] = 'tummy time';
+          return map;
+        }).toList();
       }
       return [];
     } catch (e) {
@@ -361,7 +392,12 @@ class ApiService {
 
       final response = await dio.get('/api/pumping/', queryParameters: query);
       if (response.data != null && response.data['results'] != null) {
-        return response.data['results'] as List;
+        final results = response.data['results'] as List;
+        return results.map((item) {
+          final map = Map<String, dynamic>.from(item);
+          map['model'] = 'pumping';
+          return map;
+        }).toList();
       }
       return [];
     } catch (e) {
@@ -395,7 +431,12 @@ class ApiService {
 
       final response = await dio.get('/api/notes/', queryParameters: query);
       if (response.data != null && response.data['results'] != null) {
-        return response.data['results'] as List;
+        final results = response.data['results'] as List;
+        return results.map((item) {
+          final map = Map<String, dynamic>.from(item);
+          map['model'] = 'note';
+          return map;
+        }).toList();
       }
       return [];
     } catch (e) {
@@ -442,7 +483,12 @@ class ApiService {
 
       final response = await dio.get('/api/weight/', queryParameters: query);
       if (response.data != null && response.data['results'] != null) {
-        return response.data['results'] as List;
+        final results = response.data['results'] as List;
+        return results.map((item) {
+          final map = Map<String, dynamic>.from(item);
+          map['model'] = 'weight';
+          return map;
+        }).toList();
       }
       return [];
     } catch (e) {
@@ -475,7 +521,12 @@ class ApiService {
 
       final response = await dio.get('/api/height/', queryParameters: query);
       if (response.data != null && response.data['results'] != null) {
-        return response.data['results'] as List;
+        final results = response.data['results'] as List;
+        return results.map((item) {
+          final map = Map<String, dynamic>.from(item);
+          map['model'] = 'height';
+          return map;
+        }).toList();
       }
       return [];
     } catch (e) {
@@ -508,7 +559,12 @@ class ApiService {
 
       final response = await dio.get('/api/head-circumference/', queryParameters: query);
       if (response.data != null && response.data['results'] != null) {
-        return response.data['results'] as List;
+        final results = response.data['results'] as List;
+        return results.map((item) {
+          final map = Map<String, dynamic>.from(item);
+          map['model'] = 'head circumference';
+          return map;
+        }).toList();
       }
       return [];
     } catch (e) {
@@ -541,7 +597,12 @@ class ApiService {
 
       final response = await dio.get('/api/bmi/', queryParameters: query);
       if (response.data != null && response.data['results'] != null) {
-        return response.data['results'] as List;
+        final results = response.data['results'] as List;
+        return results.map((item) {
+          final map = Map<String, dynamic>.from(item);
+          map['model'] = 'bmi';
+          return map;
+        }).toList();
       }
       return [];
     } catch (e) {
@@ -573,7 +634,12 @@ class ApiService {
 
       final response = await dio.get('/api/temperature/', queryParameters: query);
       if (response.data != null && response.data['results'] != null) {
-        return response.data['results'] as List;
+        final results = response.data['results'] as List;
+        return results.map((item) {
+          final map = Map<String, dynamic>.from(item);
+          map['model'] = 'temperature';
+          return map;
+        }).toList();
       }
       return [];
     } catch (e) {
