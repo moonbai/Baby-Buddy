@@ -24,6 +24,14 @@ if (flutterVersionName == null) {
     flutterVersionName = '1.0'
 }
 
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withReader('UTF-8') { reader ->
+        keystoreProperties.load(reader)
+    }
+}
+
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
@@ -56,17 +64,11 @@ android {
 
     signingConfigs {
         release {
-            if (System.getenv("ANDROID_KEYSTORE_BASE64")) {
-                def keystoreFile = file("release.keystore")
-                if (!keystoreFile.exists()) {
-                    new FileOutputStream(keystoreFile).with {
-                        it.write(Base64.getDecoder().decode(System.getenv("ANDROID_KEYSTORE_BASE64")))
-                    }
-                }
-                storeFile = keystoreFile
-                storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("ANDROID_KEY_ALIAS")
-                keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+            if (keystorePropertiesFile.exists()) {
+                storeFile = file(keystoreProperties['storeFile'])
+                storePassword = keystoreProperties['storePassword']
+                keyAlias = keystoreProperties['keyAlias']
+                keyPassword = keystoreProperties['keyPassword']
             } else {
                 signingConfig signingConfigs.debug
             }
