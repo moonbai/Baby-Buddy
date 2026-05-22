@@ -1,33 +1,29 @@
 import 'package:intl/intl.dart';
 
 class DateTimeUtils {
-  static String toIso8601WithLocalTimezone(DateTime dateTime) {
-    return DateFormat("yyyy-MM-dd'T'HH:mm:ssZZZZZ").format(dateTime);
-  }
-
   static String formatForApi(DateTime dateTime) {
-    return DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(dateTime.toUtc());
+    return DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(dateTime.toLocal());
   }
 
   static String formatDateOnly(DateTime dateTime) {
-    return DateFormat("yyyy-MM-dd").format(dateTime);
+    return DateFormat("yyyy-MM-dd").format(dateTime.toLocal());
   }
 
   static String formatTimeOnly(DateTime dateTime) {
-    return DateFormat("HH:mm:ss").format(dateTime.toUtc());
+    return DateFormat("HH:mm:ss").format(dateTime.toLocal());
   }
 
   static DateTime parseServerTime(String timeStr) {
     try {
       if (timeStr.contains('Z')) {
         return DateTime.parse(timeStr).toLocal();
-      } else if (timeStr.contains('+') || timeStr.contains('-', timeStr.indexOf('T'))) {
+      } else if (timeStr.contains('+') || (timeStr.contains('-') && timeStr.indexOf('-') > 10)) {
         return DateTime.parse(timeStr).toLocal();
       } else {
-        return DateTime.parse(timeStr).toLocal();
+        return DateTime.parse(timeStr);
       }
     } catch (e) {
-      return DateTime.now().toLocal();
+      return DateTime.now();
     }
   }
 }
