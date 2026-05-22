@@ -8,12 +8,13 @@ class ApiService {
   static String? _baseUrl;
   static Map<String, String> _cookies = {};
   static String? _csrfToken;
-  static AuthInterceptor? _authInterceptor;
+  static String? _authToken;
 
   static Future<void> init() async {
     _baseUrl = await Storage.getServerUrl();
     final baseUrl = _baseUrl ?? 'http://127.0.0.1:8000';
 
+    // 先清空所有拦截器，创建全新的Dio实例
     dio = Dio(BaseOptions(
       baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 30),
@@ -24,6 +25,7 @@ class ApiService {
       },
     ));
 
+    // 添加Cookie拦截器
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
         if (_cookies.isNotEmpty) {
@@ -49,10 +51,11 @@ class ApiService {
       },
     ));
 
+    // 添加认证拦截器
     final token = await Storage.getToken();
     if (token != null) {
-      _authInterceptor = AuthInterceptor(token);
-      dio.interceptors.add(_authInterceptor!);
+      _authToken = token;
+      dio.interceptors.add(AuthInterceptor(token));
     }
   }
 
@@ -122,12 +125,10 @@ class ApiService {
         if (profileData['api_key'] != null) {
           final token = profileData['api_key'] as String;
           await Storage.saveToken(token);
-          
-          if (_authInterceptor != null) {
-            dio.interceptors.remove(_authInterceptor);
-          }
-          _authInterceptor = AuthInterceptor(token);
-          dio.interceptors.add(_authInterceptor!);
+          _authToken = token;
+
+          // 重新初始化，确保AuthInterceptor正确添加
+          await init();
           
           return token;
         }
@@ -162,8 +163,8 @@ class ApiService {
         return response.data['results'] as List;
       }
       return [];
-    } catch (e) {
-      throw Exception('获取宝宝列表失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '获取宝宝列表');
     }
   }
 
@@ -171,8 +172,8 @@ class ApiService {
     try {
       final response = await dio.get('/api/children/$id/');
       return response.data as Map<String, dynamic>;
-    } catch (e) {
-      throw Exception('获取宝宝信息失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '获取宝宝信息');
     }
   }
 
@@ -193,8 +194,8 @@ class ApiService {
         }).toList();
       }
       return [];
-    } catch (e) {
-      throw Exception('获取尿布记录失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '获取尿布记录');
     }
   }
 
@@ -210,24 +211,24 @@ class ApiService {
       if (notes != null) data['notes'] = notes;
 
       await dio.post('/api/changes/', data: data);
-    } catch (e) {
-      throw Exception('添加尿布记录失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '添加尿布记录');
     }
   }
 
   static Future<void> updateDiaper(int id, Map<String, dynamic> data) async {
     try {
       await dio.patch('/api/changes/$id/', data: data);
-    } catch (e) {
-      throw Exception('更新尿布记录失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '更新尿布记录');
     }
   }
 
   static Future<void> deleteDiaper(int id) async {
     try {
       await dio.delete('/api/changes/$id/');
-    } catch (e) {
-      throw Exception('删除尿布记录失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '删除尿布记录');
     }
   }
 
@@ -248,8 +249,8 @@ class ApiService {
         }).toList();
       }
       return [];
-    } catch (e) {
-      throw Exception('获取喂奶记录失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '获取喂奶记录');
     }
   }
 
@@ -268,24 +269,24 @@ class ApiService {
       if (amountUnit != null) data['amount_unit'] = amountUnit;
 
       await dio.post('/api/feedings/', data: data);
-    } catch (e) {
-      throw Exception('添加喂奶记录失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '添加喂奶记录');
     }
   }
 
   static Future<void> updateFeeding(int id, Map<String, dynamic> data) async {
     try {
       await dio.patch('/api/feedings/$id/', data: data);
-    } catch (e) {
-      throw Exception('更新喂奶记录失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '更新喂奶记录');
     }
   }
 
   static Future<void> deleteFeeding(int id) async {
     try {
       await dio.delete('/api/feedings/$id/');
-    } catch (e) {
-      throw Exception('删除喂奶记录失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '删除喂奶记录');
     }
   }
 
@@ -306,8 +307,8 @@ class ApiService {
         }).toList();
       }
       return [];
-    } catch (e) {
-      throw Exception('获取睡眠记录失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '获取睡眠记录');
     }
   }
 
@@ -323,24 +324,24 @@ class ApiService {
       if (timer != null) data['timer'] = timer;
 
       await dio.post('/api/sleep/', data: data);
-    } catch (e) {
-      throw Exception('添加睡眠记录失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '添加睡眠记录');
     }
   }
 
   static Future<void> updateSleep(int id, Map<String, dynamic> data) async {
     try {
       await dio.patch('/api/sleep/$id/', data: data);
-    } catch (e) {
-      throw Exception('更新睡眠记录失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '更新睡眠记录');
     }
   }
 
   static Future<void> deleteSleep(int id) async {
     try {
       await dio.delete('/api/sleep/$id/');
-    } catch (e) {
-      throw Exception('删除睡眠记录失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '删除睡眠记录');
     }
   }
 
@@ -361,8 +362,8 @@ class ApiService {
         }).toList();
       }
       return [];
-    } catch (e) {
-      throw Exception('获取俯卧时间记录失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '获取俯卧时间记录');
     }
   }
 
@@ -378,8 +379,8 @@ class ApiService {
       if (timer != null) data['timer'] = timer;
 
       await dio.post('/api/tummy-times/', data: data);
-    } catch (e) {
-      throw Exception('添加俯卧时间记录失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '添加俯卧时间记录');
     }
   }
 
@@ -400,8 +401,8 @@ class ApiService {
         }).toList();
       }
       return [];
-    } catch (e) {
-      throw Exception('获取吸奶记录失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '获取吸奶记录');
     }
   }
 
@@ -417,8 +418,8 @@ class ApiService {
       if (notes != null) data['notes'] = notes;
 
       await dio.post('/api/pumping/', data: data);
-    } catch (e) {
-      throw Exception('添加吸奶记录失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '添加吸奶记录');
     }
   }
 
@@ -439,8 +440,8 @@ class ApiService {
         }).toList();
       }
       return [];
-    } catch (e) {
-      throw Exception('获取笔记失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '获取笔记');
     }
   }
 
@@ -453,24 +454,24 @@ class ApiService {
       if (time != null) data['time'] = time;
 
       await dio.post('/api/notes/', data: data);
-    } catch (e) {
-      throw Exception('添加笔记失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '添加笔记');
     }
   }
 
   static Future<void> updateNote(int id, Map<String, dynamic> data) async {
     try {
       await dio.patch('/api/notes/$id/', data: data);
-    } catch (e) {
-      throw Exception('更新笔记失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '更新笔记');
     }
   }
 
   static Future<void> deleteNote(int id) async {
     try {
       await dio.delete('/api/notes/$id/');
-    } catch (e) {
-      throw Exception('删除笔记失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '删除笔记');
     }
   }
 
@@ -491,8 +492,8 @@ class ApiService {
         }).toList();
       }
       return [];
-    } catch (e) {
-      throw Exception('获取体重记录失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '获取体重记录');
     }
   }
 
@@ -507,8 +508,8 @@ class ApiService {
       if (notes != null) data['notes'] = notes;
 
       await dio.post('/api/weight/', data: data);
-    } catch (e) {
-      throw Exception('添加体重记录失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '添加体重记录');
     }
   }
 
@@ -529,8 +530,8 @@ class ApiService {
         }).toList();
       }
       return [];
-    } catch (e) {
-      throw Exception('获取身高记录失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '获取身高记录');
     }
   }
 
@@ -545,8 +546,8 @@ class ApiService {
       if (notes != null) data['notes'] = notes;
 
       await dio.post('/api/height/', data: data);
-    } catch (e) {
-      throw Exception('添加身高记录失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '添加身高记录');
     }
   }
 
@@ -567,8 +568,8 @@ class ApiService {
         }).toList();
       }
       return [];
-    } catch (e) {
-      throw Exception('获取头围记录失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '获取头围记录');
     }
   }
 
@@ -583,8 +584,8 @@ class ApiService {
       if (notes != null) data['notes'] = notes;
 
       await dio.post('/api/head-circumference/', data: data);
-    } catch (e) {
-      throw Exception('添加头围记录失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '添加头围记录');
     }
   }
 
@@ -605,8 +606,8 @@ class ApiService {
         }).toList();
       }
       return [];
-    } catch (e) {
-      throw Exception('获取BMI记录失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '获取BMI记录');
     }
   }
 
@@ -620,8 +621,8 @@ class ApiService {
       if (notes != null) data['notes'] = notes;
 
       await dio.post('/api/bmi/', data: data);
-    } catch (e) {
-      throw Exception('添加BMI记录失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '添加BMI记录');
     }
   }
 
@@ -642,8 +643,8 @@ class ApiService {
         }).toList();
       }
       return [];
-    } catch (e) {
-      throw Exception('获取体温记录失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '获取体温记录');
     }
   }
 
@@ -658,8 +659,8 @@ class ApiService {
       if (notes != null) data['notes'] = notes;
 
       await dio.post('/api/temperature/', data: data);
-    } catch (e) {
-      throw Exception('添加体温记录失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '添加体温记录');
     }
   }
 
@@ -675,8 +676,8 @@ class ApiService {
         return response.data['results'] as List;
       }
       return [];
-    } catch (e) {
-      throw Exception('获取计时器列表失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '获取计时器列表');
     }
   }
 
@@ -689,16 +690,16 @@ class ApiService {
 
       final response = await dio.post('/api/timers/', data: data);
       return response.data as Map<String, dynamic>;
-    } catch (e) {
-      throw Exception('添加计时器失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '添加计时器');
     }
   }
 
   static Future<void> stopTimer(int id) async {
     try {
       await dio.delete('/api/timers/$id/');
-    } catch (e) {
-      throw Exception('停止计时器失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '停止计时器');
     }
   }
 
@@ -709,8 +710,8 @@ class ApiService {
         return response.data['results'] as List;
       }
       return [];
-    } catch (e) {
-      throw Exception('获取标签失败: $e');
+    } on DioException catch (e) {
+      throw _handleApiError(e, '获取标签');
     }
   }
 
@@ -746,15 +747,33 @@ class ApiService {
       throw Exception('获取时间线失败: $e');
     }
   }
+
+  static Exception _handleApiError(DioException e, String action) {
+    if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
+      return Exception('没有权限，请重新登录');
+    } else if (e.type == DioExceptionType.connectionTimeout) {
+      return Exception('$action失败：连接超时');
+    } else if (e.type == DioExceptionType.connectionError) {
+      return Exception('$action失败：无法连接到服务器');
+    } else if (e.response?.statusCode == 500) {
+      return Exception('$action失败：服务器错误');
+    } else {
+      final errorMessage = e.response?.data is Map
+          ? e.response?.data['detail'] ?? e.response?.data['message']
+          : e.response?.data;
+      return Exception('$action失败：${errorMessage ?? e.message}');
+    }
+  }
 }
 
 class AuthInterceptor extends Interceptor {
   final String token;
+  
   AuthInterceptor(this.token);
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     options.headers['Authorization'] = 'Token $token';
-    super.onRequest(options, handler);
+    return handler.next(options);
   }
 }
