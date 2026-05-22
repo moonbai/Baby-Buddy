@@ -2,7 +2,7 @@ import 'package:intl/intl.dart';
 
 class DateTimeUtils {
   static String formatForApi(DateTime dateTime) {
-    return DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(dateTime.toLocal());
+    return DateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").format(dateTime.toUtc());
   }
 
   static String formatDateOnly(DateTime dateTime) {
@@ -15,15 +15,18 @@ class DateTimeUtils {
 
   static DateTime parseServerTime(String timeStr) {
     try {
-      if (timeStr.contains('Z')) {
-        return DateTime.parse(timeStr).toLocal();
-      } else if (timeStr.contains('+') || (timeStr.contains('-') && timeStr.indexOf('-') > 10)) {
-        return DateTime.parse(timeStr).toLocal();
-      } else {
-        return DateTime.parse(timeStr);
-      }
+      return DateTime.parse(timeStr).toLocal();
     } catch (e) {
       return DateTime.now();
+    }
+  }
+
+  static String formatDisplayTime(String timeStr) {
+    try {
+      final dt = parseServerTime(timeStr);
+      return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return timeStr;
     }
   }
 }

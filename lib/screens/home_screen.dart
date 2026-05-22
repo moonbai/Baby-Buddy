@@ -6,6 +6,7 @@ import 'package:babybuddy_app/screens/child_select.dart';
 import 'package:babybuddy_app/screens/quick_add.dart';
 import 'package:babybuddy_app/screens/about_screen.dart';
 import 'package:babybuddy_app/utils/storage.dart';
+import 'package:babybuddy_app/utils/date_time_utils.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -253,12 +254,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _formatTime(String timeStr) {
-    try {
-      final dt = DateTime.parse(timeStr);
-      return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-    } catch (e) {
-      return timeStr;
-    }
+    return DateTimeUtils.formatDisplayTime(timeStr);
   }
 
   String _getRecordBrief(dynamic item) {

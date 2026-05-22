@@ -411,10 +411,10 @@ class _FeedingOptionsState extends State<FeedingOptions> {
       _selectedType = item['type'] ?? _selectedType;
       _selectedMethod = item['method'] ?? _selectedMethod;
       if (item['start'] != null) {
-        _startTime = DateTime.parse(item['start']);
+        _startTime = DateTimeUtils.parseServerTime(item['start']);
       }
       if (item['end'] != null) {
-        _endTime = DateTime.parse(item['end']);
+        _endTime = DateTimeUtils.parseServerTime(item['end']);
       }
       if (item['amount'] != null) {
         _amountController.text = item['amount'].toString();
@@ -635,10 +635,10 @@ class _SleepOptionsState extends State<SleepOptions> {
       final item = widget.editItem!;
       _isNap = item['nap'] ?? false;
       if (item['start'] != null) {
-        _startTime = DateTime.parse(item['start']);
+        _startTime = DateTimeUtils.parseServerTime(item['start']);
       }
       if (item['end'] != null) {
-        _endTime = DateTime.parse(item['end']);
+        _endTime = DateTimeUtils.parseServerTime(item['end']);
       }
       if (item['notes'] != null) {
         _notesController.text = item['notes'].toString();
@@ -985,10 +985,10 @@ class _TummyTimeOptionsState extends State<TummyTimeOptions> {
     if (widget.editItem != null) {
       final item = widget.editItem!;
       if (item['start'] != null) {
-        _startTime = DateTime.parse(item['start']);
+        _startTime = DateTimeUtils.parseServerTime(item['start']);
       }
       if (item['end'] != null) {
-        _endTime = DateTime.parse(item['end']);
+        _endTime = DateTimeUtils.parseServerTime(item['end']);
       }
       if (item['milestone'] != null) {
         _milestoneController.text = item['milestone'].toString();
@@ -1139,10 +1139,10 @@ class _PumpingOptionsState extends State<PumpingOptions> {
     if (widget.editItem != null) {
       final item = widget.editItem!;
       if (item['start'] != null) {
-        _startTime = DateTime.parse(item['start']);
+        _startTime = DateTimeUtils.parseServerTime(item['start']);
       }
       if (item['end'] != null) {
-        _endTime = DateTime.parse(item['end']);
+        _endTime = DateTimeUtils.parseServerTime(item['end']);
       }
       if (item['amount'] != null) {
         _amountController.text = item['amount'].toString();
