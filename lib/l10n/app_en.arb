@@ -134,5 +134,12 @@
   "weightKg": "Weight",
   "heightCm": "Height",
   "headCircumferenceCm": "Head Circumference",
-  "temperatureC": "Temperature"
+  "temperatureC": "Temperature",
+  "babyGrowthAssistant": "Baby Growth Tracker",
+  "author": "Author",
+  "sourceRepo": "Source Code",
+  "projectIntro": "Project Introduction",
+  "projectDesc": "This is a Flutter mobile client app for Baby Buddy, used to conveniently record and track your baby's growth data.",
+  "copyrightInfo": "Copyright",
+  "copyrightText": "© 2026 All Rights Reserved"
 }

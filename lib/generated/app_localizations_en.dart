@@ -407,4 +407,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get temperatureC => 'Temperature';
+
+  @override
+  String get babyGrowthAssistant => 'Baby Growth Tracker';
+
+  @override
+  String get author => 'Author';
+
+  @override
+  String get sourceRepo => 'Source Code';
+
+  @override
+  String get projectIntro => 'Project Introduction';
+
+  @override
+  String get projectDesc => 'This is a Flutter mobile client app for Baby Buddy, used to conveniently record and track your baby\'s growth data.';
+
+  @override
+  String get copyrightInfo => 'Copyright';
+
+  @override
+  String get copyrightText => '© 2026 All Rights Reserved';
 }

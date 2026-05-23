@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:babybuddy_app/generated/app_localizations.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -13,9 +14,10 @@ class AboutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('关于'),
+        title: Text(l10n.about),
         elevation: 0,
         centerTitle: true,
       ),
@@ -55,9 +57,9 @@ class AboutScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Text(
-                  '宝宝成长记录助手',
-                  style: TextStyle(
+                Text(
+                  l10n.babyGrowthAssistant,
+                  style: const TextStyle(
                     fontSize: 16,
                     color: Color(0xFF757575),
                     height: 1.4,
@@ -86,14 +88,14 @@ class AboutScreen extends StatelessWidget {
           const Divider(height: 1, thickness: 0.8, color: Color(0xFFEEEEEE)),
           ListTile(
             leading: const Icon(Icons.person, color: Color(0xFF2196F3)),
-            title: const Text('作者', style: TextStyle(fontWeight: FontWeight.w500)),
+            title: Text(l10n.author, style: const TextStyle(fontWeight: FontWeight.w500)),
             subtitle: const Text('Mars', style: TextStyle(color: Color(0xFF757575))),
             contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           ),
           const Divider(height: 1, thickness: 0.8, color: Color(0xFFEEEEEE)),
           ListTile(
             leading: const Icon(Icons.link, color: Color(0xFF2196F3)),
-            title: const Text('源码仓库', style: TextStyle(fontWeight: FontWeight.w500)),
+            title: Text(l10n.sourceRepo, style: const TextStyle(fontWeight: FontWeight.w500)),
             subtitle: const Text('https://github.com/moonbai/Baby-Buddy',
                 style: TextStyle(color: Color(0xFF757575), fontSize: 13)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -102,18 +104,18 @@ class AboutScreen extends StatelessWidget {
           const Divider(height: 1, thickness: 0.8, color: Color(0xFFEEEEEE)),
           ListTile(
             leading: const Icon(Icons.info_outline, color: Color(0xFF2196F3)),
-            title: const Text('项目简介', style: TextStyle(fontWeight: FontWeight.w500)),
-            subtitle: const Text(
-              '这是一个 Baby Buddy 的 Flutter 移动客户端应用，用于方便地记录和查看宝宝的成长数据。',
-              style: TextStyle(color: Color(0xFF757575), height: 1.5),
+            title: Text(l10n.projectIntro, style: const TextStyle(fontWeight: FontWeight.w500)),
+            subtitle: Text(
+              l10n.projectDesc,
+              style: const TextStyle(color: Color(0xFF757575), height: 1.5),
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           ),
           const Divider(height: 1, thickness: 0.8, color: Color(0xFFEEEEEE)),
           ListTile(
             leading: const Icon(Icons.copyright, color: Color(0xFF2196F3)),
-            title: const Text('版权信息', style: TextStyle(fontWeight: FontWeight.w500)),
-            subtitle: const Text('© 2026 保留所有权利', style: TextStyle(color: Color(0xFF757575))),
+            title: Text(l10n.copyrightInfo, style: const TextStyle(fontWeight: FontWeight.w500)),
+            subtitle: Text(l10n.copyrightText, style: const TextStyle(color: Color(0xFF757575))),
             contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           ),
         ],

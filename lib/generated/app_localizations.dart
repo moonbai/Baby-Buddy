@@ -165,6 +165,13 @@ abstract class AppLocalizations {
   String get heightCm;
   String get headCircumferenceCm;
   String get temperatureC;
+  String get babyGrowthAssistant;
+  String get author;
+  String get sourceRepo;
+  String get projectIntro;
+  String get projectDesc;
+  String get copyrightInfo;
+  String get copyrightText;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

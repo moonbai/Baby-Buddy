@@ -407,4 +407,25 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get temperatureC => '体温';
+
+  @override
+  String get babyGrowthAssistant => '宝宝成长记录助手';
+
+  @override
+  String get author => '作者';
+
+  @override
+  String get sourceRepo => '源码仓库';
+
+  @override
+  String get projectIntro => '项目简介';
+
+  @override
+  String get projectDesc => '这是一个 Baby Buddy 的 Flutter 移动客户端应用，用于方便地记录和查看宝宝的成长数据。';
+
+  @override
+  String get copyrightInfo => '版权信息';
+
+  @override
+  String get copyrightText => '© 2026 保留所有权利';
 }
