@@ -1,6 +1,6 @@
-# Baby Buddy 客户端
+中文 | [English](README.en.md)
 
-[English Version](README.en.md)
+# Baby Buddy 客户端
 
 一个为 [Baby Buddy](https://github.com/babybuddy/babybuddy) 打造的 Flutter 移动应用客户端，帮助您轻松记录宝宝的日常活动！
 
@@ -8,7 +8,6 @@
 
 - 📱 **现代化移动端界面**：Material Design 3 设计，简洁直观
 - 🌙 **主题设置**：支持浅色/深色/跟随系统三种主题模式
-- 🎨 **深色模式完全支持**：所有页面都完美适配深色模式
 - 🌐 **多语言支持**：支持中文和英文，可在设置中切换
 - ⏱️ **活动计时器**：支持喂奶、睡眠、俯卧时间的实时计时，解决了计时器时间同步问题
 - 🔐 **安全认证**：通过 Token 安全连接到您的 Baby Buddy 服务器
