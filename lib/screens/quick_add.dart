@@ -528,13 +528,24 @@ class _FeedingOptionsState extends State<FeedingOptions> {
         amount = double.tryParse(_amountController.text);
       }
       
-      final actualEndTime = widget.timer != null ? DateTime.now() : _endTime;
+      // 确保结束时间不早于开始时间
+      DateTime actualEndTime;
+      if (widget.timer != null) {
+        actualEndTime = DateTime.now();
+      } else {
+        actualEndTime = _endTime;
+      }
+      
+      // 如果结束时间早于开始时间，自动调整
+      if (actualEndTime.isBefore(_startTime)) {
+        actualEndTime = _startTime.add(const Duration(minutes: 1));
+      }
       
       if (widget.editItem != null) {
         final data = <String, dynamic>{
           'child': widget.childId,
           'start': DateTimeUtils.formatForApi(_startTime),
-          'end': DateTimeUtils.formatForApi(_endTime),
+          'end': DateTimeUtils.formatForApi(actualEndTime),
           'type': _selectedType,
           'method': _selectedMethod,
         };
@@ -564,7 +575,7 @@ class _FeedingOptionsState extends State<FeedingOptions> {
           await ApiService.addFeeding(
             widget.childId,
             DateTimeUtils.formatForApi(_startTime),
-            DateTimeUtils.formatForApi(_endTime),
+            DateTimeUtils.formatForApi(actualEndTime),
             _selectedType,
             _selectedMethod,
             amount: amount,
@@ -745,13 +756,24 @@ class _SleepOptionsState extends State<SleepOptions> {
     final l10n = AppLocalizations.of(context)!;
     setState(() => _isLoading = true);
     try {
-      final actualEndTime = widget.timer != null ? DateTime.now() : _endTime;
+      // 确保结束时间不早于开始时间
+      DateTime actualEndTime;
+      if (widget.timer != null) {
+        actualEndTime = DateTime.now();
+      } else {
+        actualEndTime = _endTime;
+      }
+      
+      // 如果结束时间早于开始时间，自动调整
+      if (actualEndTime.isBefore(_startTime)) {
+        actualEndTime = _startTime.add(const Duration(minutes: 1));
+      }
       
       if (widget.editItem != null) {
         final data = <String, dynamic>{
           'child': widget.childId,
           'start': DateTimeUtils.formatForApi(_startTime),
-          'end': DateTimeUtils.formatForApi(_endTime),
+          'end': DateTimeUtils.formatForApi(actualEndTime),
           'nap': _isNap,
         };
         if (_notesController.text.isNotEmpty) {
@@ -773,7 +795,7 @@ class _SleepOptionsState extends State<SleepOptions> {
           await ApiService.addSleep(
             widget.childId,
             DateTimeUtils.formatForApi(_startTime),
-            DateTimeUtils.formatForApi(_endTime),
+            DateTimeUtils.formatForApi(actualEndTime),
             nap: _isNap,
             notes: _notesController.text.isNotEmpty ? _notesController.text : null,
           );
@@ -1133,13 +1155,24 @@ class _TummyTimeOptionsState extends State<TummyTimeOptions> {
     final l10n = AppLocalizations.of(context)!;
     setState(() => _isLoading = true);
     try {
-      final actualEndTime = widget.timer != null ? DateTime.now() : _endTime;
+      // 确保结束时间不早于开始时间
+      DateTime actualEndTime;
+      if (widget.timer != null) {
+        actualEndTime = DateTime.now();
+      } else {
+        actualEndTime = _endTime;
+      }
+      
+      // 如果结束时间早于开始时间，自动调整
+      if (actualEndTime.isBefore(_startTime)) {
+        actualEndTime = _startTime.add(const Duration(minutes: 1));
+      }
       
       if (widget.editItem != null) {
         final data = <String, dynamic>{
           'child': widget.childId,
           'start': DateTimeUtils.formatForApi(_startTime),
-          'end': DateTimeUtils.formatForApi(_endTime),
+          'end': DateTimeUtils.formatForApi(actualEndTime),
         };
         if (_milestoneController.text.isNotEmpty) {
           data['milestone'] = _milestoneController.text;
@@ -1163,7 +1196,7 @@ class _TummyTimeOptionsState extends State<TummyTimeOptions> {
           await ApiService.addTummyTime(
             widget.childId,
             DateTimeUtils.formatForApi(_startTime),
-            DateTimeUtils.formatForApi(_endTime),
+            DateTimeUtils.formatForApi(actualEndTime),
             milestone: _milestoneController.text.isNotEmpty ? _milestoneController.text : null,
             notes: _notesController.text.isNotEmpty ? _notesController.text : null,
           );
@@ -1307,11 +1340,17 @@ class _PumpingOptionsState extends State<PumpingOptions> {
         amount = double.tryParse(_amountController.text);
       }
       
+      // 确保结束时间不早于开始时间
+      DateTime actualEndTime = _endTime;
+      if (actualEndTime.isBefore(_startTime)) {
+        actualEndTime = _startTime.add(const Duration(minutes: 1));
+      }
+      
       if (widget.editItem != null) {
         final data = <String, dynamic>{
           'child': widget.childId,
           'start': DateTimeUtils.formatForApi(_startTime),
-          'end': DateTimeUtils.formatForApi(_endTime),
+          'end': DateTimeUtils.formatForApi(actualEndTime),
         };
         if (amount != null) {
           data['amount'] = amount;
@@ -1326,7 +1365,7 @@ class _PumpingOptionsState extends State<PumpingOptions> {
         await ApiService.addPumping(
           widget.childId,
           DateTimeUtils.formatForApi(_startTime),
-          DateTimeUtils.formatForApi(_endTime),
+          DateTimeUtils.formatForApi(actualEndTime),
           amount: amount,
           amountUnit: 'ml',
           notes: _notesController.text.isNotEmpty ? _notesController.text : null,

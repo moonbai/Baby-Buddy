@@ -2,7 +2,7 @@ import 'package:intl/intl.dart';
 
 class DateTimeUtils {
   static String formatForApi(DateTime dateTime) {
-    return DateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").format(dateTime.toUtc());
+    return DateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").format(dateTime.toUtc());
   }
 
   static String formatDateOnly(DateTime dateTime) {
