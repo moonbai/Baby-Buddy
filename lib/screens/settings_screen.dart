@@ -186,13 +186,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required String groupValue,
     required ValueChanged<String> onChanged,
   }) {
-    return RadioListTile<String>(
-      title: Text(title),
-      value: value,
-      groupValue: groupValue,
-      onChanged: (v) => onChanged(v!),
-      secondary: const Icon(Icons.translate),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 0),
+    final isSelected = value == groupValue;
+    return InkWell(
+      onTap: () => onChanged(value),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
+        child: Row(
+          children: [
+            Icon(
+              Icons.translate,
+              color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ),
+            Radio<String>(
+              value: value,
+              groupValue: groupValue,
+              onChanged: (v) => onChanged(v!),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -204,14 +227,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required String groupValue,
     required ValueChanged<String> onChanged,
   }) {
-    return RadioListTile<String>(
-      title: Text(title),
-      subtitle: Text(subtitle),
-      value: value,
-      groupValue: groupValue,
-      onChanged: (v) => onChanged(v!),
-      secondary: Icon(icon),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 0),
+    final isSelected = value == groupValue;
+    return InkWell(
+      onTap: () => onChanged(value),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Radio<String>(
+              value: value,
+              groupValue: groupValue,
+              onChanged: (v) => onChanged(v!),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -237,13 +295,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            SwitchListTile(
-              title: Text(l10n.quickReportMode),
-              subtitle: Text(l10n.quickReportModeSubtitle),
-              value: _quickReport,
-              onChanged: _toggleQuickReport,
-              secondary: const Icon(Icons.speed),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 0),
+            Row(
+              children: [
+                Icon(
+                  Icons.speed,
+                  color: _quickReport ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.quickReportMode,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        l10n.quickReportModeSubtitle,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: _quickReport,
+                  onChanged: _toggleQuickReport,
+                ),
+              ],
             ),
           ],
         ),

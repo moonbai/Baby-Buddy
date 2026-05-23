@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:babybuddy_app/api/api_service.dart';
 import 'package:babybuddy_app/utils/storage.dart';
 import 'package:babybuddy_app/utils/date_time_utils.dart';
+import 'package:babybuddy_app/generated/app_localizations.dart';
 
 class QuickAdd extends StatefulWidget {
   final Map<String, dynamic>? editItem;
@@ -81,6 +82,7 @@ class _QuickAddState extends State<QuickAdd> {
   void _showEditOptions() {
     if (_editModel == null || _editItem == null) return;
 
+    final l10n = AppLocalizations.of(context)!;
     switch (_editModel) {
       case 'feeding':
         showModalBottomSheet(
@@ -184,13 +186,14 @@ class _QuickAddState extends State<QuickAdd> {
         );
         break;
       default:
-        Fluttertoast.showToast(msg: '该类型暂不支持编辑');
+        Fluttertoast.showToast(msg: l10n.typeNotSupported);
     }
   }
 
   void _showFeedingOptions() {
+    final l10n = AppLocalizations.of(context)!;
     if (childId == null) {
-      Fluttertoast.showToast(msg: '请先选择宝宝');
+      Fluttertoast.showToast(msg: l10n.noChildSelected);
       return;
     }
     showModalBottomSheet(
@@ -207,8 +210,9 @@ class _QuickAddState extends State<QuickAdd> {
   }
 
   void _showSleepOptions() {
+    final l10n = AppLocalizations.of(context)!;
     if (childId == null) {
-      Fluttertoast.showToast(msg: '请先选择宝宝');
+      Fluttertoast.showToast(msg: l10n.noChildSelected);
       return;
     }
     showModalBottomSheet(
@@ -225,8 +229,9 @@ class _QuickAddState extends State<QuickAdd> {
   }
 
   void _showDiaperOptions() {
+    final l10n = AppLocalizations.of(context)!;
     if (childId == null) {
-      Fluttertoast.showToast(msg: '请先选择宝宝');
+      Fluttertoast.showToast(msg: l10n.noChildSelected);
       return;
     }
     showModalBottomSheet(
@@ -243,8 +248,9 @@ class _QuickAddState extends State<QuickAdd> {
   }
 
   void _showTummyTimeOptions() {
+    final l10n = AppLocalizations.of(context)!;
     if (childId == null) {
-      Fluttertoast.showToast(msg: '请先选择宝宝');
+      Fluttertoast.showToast(msg: l10n.noChildSelected);
       return;
     }
     showModalBottomSheet(
@@ -261,8 +267,9 @@ class _QuickAddState extends State<QuickAdd> {
   }
 
   void _showPumpingOptions() {
+    final l10n = AppLocalizations.of(context)!;
     if (childId == null) {
-      Fluttertoast.showToast(msg: '请先选择宝宝');
+      Fluttertoast.showToast(msg: l10n.noChildSelected);
       return;
     }
     showModalBottomSheet(
@@ -279,8 +286,9 @@ class _QuickAddState extends State<QuickAdd> {
   }
 
   void _showNoteOptions() {
+    final l10n = AppLocalizations.of(context)!;
     if (childId == null) {
-      Fluttertoast.showToast(msg: '请先选择宝宝');
+      Fluttertoast.showToast(msg: l10n.noChildSelected);
       return;
     }
     showModalBottomSheet(
@@ -297,8 +305,9 @@ class _QuickAddState extends State<QuickAdd> {
   }
 
   void _showMeasurementOptions() {
+    final l10n = AppLocalizations.of(context)!;
     if (childId == null) {
-      Fluttertoast.showToast(msg: '请先选择宝宝');
+      Fluttertoast.showToast(msg: l10n.noChildSelected);
       return;
     }
     showModalBottomSheet(
@@ -316,8 +325,9 @@ class _QuickAddState extends State<QuickAdd> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('快速记录')),
+      appBar: AppBar(title: Text(l10n.quickAdd)),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
@@ -325,49 +335,49 @@ class _QuickAddState extends State<QuickAdd> {
               children: [
                 _buildQuickAction(
                   icon: Icons.restaurant,
-                  label: '喂奶',
+                  label: l10n.feeding,
                   color: Colors.orange,
                   onTap: _showFeedingOptions,
                 ),
                 const SizedBox(height: 12),
                 _buildQuickAction(
                   icon: Icons.bedtime,
-                  label: '睡眠',
+                  label: l10n.sleep,
                   color: Colors.blue,
                   onTap: _showSleepOptions,
                 ),
                 const SizedBox(height: 12),
                 _buildQuickAction(
                   icon: Icons.baby_changing_station,
-                  label: '尿布',
+                  label: l10n.diaper,
                   color: Colors.yellow,
                   onTap: _showDiaperOptions,
                 ),
                 const SizedBox(height: 12),
                 _buildQuickAction(
                   icon: Icons.self_improvement,
-                  label: '俯卧时间',
+                  label: l10n.tummyTime,
                   color: Colors.green,
                   onTap: _showTummyTimeOptions,
                 ),
                 const SizedBox(height: 12),
                 _buildQuickAction(
                   icon: Icons.water_drop,
-                  label: '吸奶',
+                  label: l10n.pumping,
                   color: Colors.purple,
                   onTap: _showPumpingOptions,
                 ),
                 const SizedBox(height: 12),
                 _buildQuickAction(
                   icon: Icons.note,
-                  label: '笔记',
+                  label: l10n.note,
                   color: Colors.teal,
                   onTap: _showNoteOptions,
                 ),
                 const SizedBox(height: 12),
                 _buildQuickAction(
                   icon: Icons.monitor_weight,
-                  label: '身体测量',
+                  label: l10n.weight + ' / ' + l10n.height,
                   color: Colors.deepPurple,
                   onTap: _showMeasurementOptions,
                 ),
@@ -472,25 +482,45 @@ class _FeedingOptionsState extends State<FeedingOptions> {
     super.dispose();
   }
 
-  final Map<String, String> _feedingTypesMap = const {
-    'breast milk': '母乳',
-    'formula': '配方奶',
-    'fortified breast milk': '强化母乳',
-    'pumped milk': '泵出奶',
-  };
-
-  final Map<String, String> _feedingMethodsMap = const {
-    'left breast': '左侧乳房',
-    'right breast': '右侧乳房',
-    'both breasts': '双侧',
-    'bottle': '奶瓶',
-    'spoon': '勺子',
-  };
-
   final List<String> _feedingTypes = const ['breast milk', 'formula', 'fortified breast milk', 'pumped milk'];
   final List<String> _feedingMethods = const ['left breast', 'right breast', 'both breasts', 'bottle', 'spoon'];
 
+  String _getTypeName(String type) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (type) {
+      case 'breast milk':
+        return l10n.breastMilk;
+      case 'formula':
+        return l10n.formula;
+      case 'fortified breast milk':
+        return l10n.fortifiedBreastMilk;
+      case 'pumped milk':
+        return l10n.pumpedMilk;
+      default:
+        return type;
+    }
+  }
+
+  String _getMethodName(String method) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (method) {
+      case 'left breast':
+        return l10n.leftBreast;
+      case 'right breast':
+        return l10n.rightBreast;
+      case 'both breasts':
+        return l10n.bothBreasts;
+      case 'bottle':
+        return l10n.bottle;
+      case 'spoon':
+        return l10n.spoon;
+      default:
+        return method;
+    }
+  }
+
   Future<void> _save() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() => _isLoading = true);
     try {
       double? amount;
@@ -498,7 +528,6 @@ class _FeedingOptionsState extends State<FeedingOptions> {
         amount = double.tryParse(_amountController.text);
       }
       
-      // 当使用计时器时，使用当前时间作为结束时间
       final actualEndTime = widget.timer != null ? DateTime.now() : _endTime;
       
       if (widget.editItem != null) {
@@ -517,7 +546,7 @@ class _FeedingOptionsState extends State<FeedingOptions> {
           data['notes'] = _notesController.text;
         }
         await ApiService.updateFeeding(widget.editItem!['id'], data);
-        Fluttertoast.showToast(msg: '喂奶记录已更新');
+        Fluttertoast.showToast(msg: l10n.feedingUpdated);
       } else {
         if (widget.timer != null) {
           await ApiService.addFeeding(
@@ -543,16 +572,16 @@ class _FeedingOptionsState extends State<FeedingOptions> {
             notes: _notesController.text.isNotEmpty ? _notesController.text : null,
           );
         }
-        Fluttertoast.showToast(msg: '喂奶记录已添加');
+        Fluttertoast.showToast(msg: l10n.feedingRecorded);
       }
       widget.onSaved();
     } catch (e) {
       if (mounted) {
-        String errorMsg = widget.editItem != null ? '更新失败' : '添加失败';
+        String errorMsg = widget.editItem != null ? l10n.updateFailed : l10n.addFailed;
         if (e.toString().contains('403')) {
-          errorMsg = '$errorMsg：没有权限，请重新登录';
+          errorMsg = '$errorMsg: ${l10n.noPermission}';
         } else if (e.toString().contains('DioException')) {
-          errorMsg = '$errorMsg：网络错误，请检查网络连接';
+          errorMsg = '$errorMsg: ${l10n.networkError}';
         }
         Fluttertoast.showToast(
           msg: errorMsg,
@@ -567,6 +596,7 @@ class _FeedingOptionsState extends State<FeedingOptions> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: EdgeInsets.only(
         left: 20,
@@ -584,36 +614,36 @@ class _FeedingOptionsState extends State<FeedingOptions> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              widget.editItem != null ? '编辑喂奶记录' : '记录喂奶',
+              widget.editItem != null ? '${l10n.edit}${l10n.feeding}' : '${l10n.add}${l10n.feeding}',
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 24),
-            _buildSection('喂养类型'),
+            _buildSection(l10n.milkType),
             const SizedBox(height: 8),
-            _buildOptions(_feedingTypes, _selectedType, (v) => setState(() => _selectedType = v)),
+            _buildOptions(_feedingTypes, _selectedType, (v) => setState(() => _selectedType = v), _getTypeName),
             const SizedBox(height: 16),
-            _buildSection('喂养方式'),
+            _buildSection(l10n.feedingMethod),
             const SizedBox(height: 8),
-            _buildOptions(_feedingMethods, _selectedMethod, (v) => setState(() => _selectedMethod = v)),
+            _buildOptions(_feedingMethods, _selectedMethod, (v) => setState(() => _selectedMethod = v), _getMethodName),
             const SizedBox(height: 16),
             TextField(
               controller: _amountController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: '奶量 (ml)',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: '${l10n.amount} (ml)',
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _notesController,
               maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: '备注',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.notes,
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 24),
@@ -622,7 +652,7 @@ class _FeedingOptionsState extends State<FeedingOptions> {
               height: 48,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _save,
-                child: _isLoading ? const CircularProgressIndicator() : Text(widget.editItem != null ? '更新记录' : '保存记录'),
+                child: _isLoading ? const CircularProgressIndicator() : Text(widget.editItem != null ? l10n.save : l10n.confirm),
               ),
             ),
           ],
@@ -641,20 +671,14 @@ class _FeedingOptionsState extends State<FeedingOptions> {
     );
   }
 
-  Widget _buildOptions(List<String> options, String selected, ValueChanged<String> onChanged) {
+  Widget _buildOptions(List<String> options, String selected, ValueChanged<String> onChanged, String Function(String) getName) {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: options.map((option) {
         final isSelected = option == selected;
-        String displayText = option;
-        if (_feedingTypesMap.containsKey(option)) {
-          displayText = _feedingTypesMap[option]!;
-        } else if (_feedingMethodsMap.containsKey(option)) {
-          displayText = _feedingMethodsMap[option]!;
-        }
         return ChoiceChip(
-          label: Text(displayText),
+          label: Text(getName(option)),
           selected: isSelected,
           onSelected: (_) => onChanged(option),
         );
@@ -718,9 +742,9 @@ class _SleepOptionsState extends State<SleepOptions> {
   }
 
   Future<void> _save() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() => _isLoading = true);
     try {
-      // 当使用计时器时，使用当前时间作为结束时间
       final actualEndTime = widget.timer != null ? DateTime.now() : _endTime;
       
       if (widget.editItem != null) {
@@ -734,7 +758,7 @@ class _SleepOptionsState extends State<SleepOptions> {
           data['notes'] = _notesController.text;
         }
         await ApiService.updateSleep(widget.editItem!['id'], data);
-        Fluttertoast.showToast(msg: '睡眠记录已更新');
+        Fluttertoast.showToast(msg: l10n.sleepUpdated);
       } else {
         if (widget.timer != null) {
           await ApiService.addSleep(
@@ -754,16 +778,16 @@ class _SleepOptionsState extends State<SleepOptions> {
             notes: _notesController.text.isNotEmpty ? _notesController.text : null,
           );
         }
-        Fluttertoast.showToast(msg: '睡眠记录已添加');
+        Fluttertoast.showToast(msg: l10n.sleepRecorded);
       }
       widget.onSaved();
     } catch (e) {
       if (mounted) {
-        String errorMsg = widget.editItem != null ? '更新失败' : '添加失败';
+        String errorMsg = widget.editItem != null ? l10n.updateFailed : l10n.addFailed;
         if (e.toString().contains('403')) {
-          errorMsg = '$errorMsg：没有权限，请重新登录';
+          errorMsg = '$errorMsg: ${l10n.noPermission}';
         } else if (e.toString().contains('DioException')) {
-          errorMsg = '$errorMsg：网络错误，请检查网络连接';
+          errorMsg = '$errorMsg: ${l10n.networkError}';
         }
         Fluttertoast.showToast(
           msg: errorMsg,
@@ -778,6 +802,7 @@ class _SleepOptionsState extends State<SleepOptions> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: EdgeInsets.only(
         left: 20,
@@ -795,7 +820,7 @@ class _SleepOptionsState extends State<SleepOptions> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              widget.editItem != null ? '编辑睡眠记录' : '记录睡眠',
+              widget.editItem != null ? '${l10n.edit}${l10n.sleep}' : '${l10n.add}${l10n.sleep}',
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -804,7 +829,7 @@ class _SleepOptionsState extends State<SleepOptions> {
             const SizedBox(height: 24),
             Row(
               children: [
-                const Text('小睡'),
+                Text(l10n.nap),
                 Switch(
                   value: _isNap,
                   onChanged: (v) => setState(() => _isNap = v),
@@ -815,9 +840,9 @@ class _SleepOptionsState extends State<SleepOptions> {
             TextField(
               controller: _notesController,
               maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: '备注',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.notes,
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 24),
@@ -826,7 +851,7 @@ class _SleepOptionsState extends State<SleepOptions> {
               height: 48,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _save,
-                child: _isLoading ? const CircularProgressIndicator() : Text(widget.editItem != null ? '更新记录' : '保存记录'),
+                child: _isLoading ? const CircularProgressIndicator() : Text(widget.editItem != null ? l10n.save : l10n.confirm),
               ),
             ),
           ],
@@ -879,15 +904,26 @@ class _DiaperOptionsState extends State<DiaperOptions> {
     super.dispose();
   }
 
-  final Map<String, String> _colorMap = const {
-    'unknown': '未知',
-    'yellow': '黄色',
-    'brown': '棕色',
-    'green': '绿色',
-    'other': '其他',
-  };
+  String _getColorName(String color) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (color) {
+      case 'unknown':
+        return l10n.unknown;
+      case 'yellow':
+        return l10n.yellow;
+      case 'brown':
+        return l10n.brown;
+      case 'green':
+        return l10n.green;
+      case 'other':
+        return l10n.other;
+      default:
+        return color;
+    }
+  }
 
   Future<void> _save() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() => _isLoading = true);
     try {
       if (widget.editItem != null) {
@@ -902,7 +938,7 @@ class _DiaperOptionsState extends State<DiaperOptions> {
           data['notes'] = _notesController.text;
         }
         await ApiService.updateDiaper(widget.editItem!['id'], data);
-        Fluttertoast.showToast(msg: '尿布记录已更新');
+        Fluttertoast.showToast(msg: l10n.deleteSuccess);
       } else {
         await ApiService.addDiaper(
           widget.childId,
@@ -912,16 +948,16 @@ class _DiaperOptionsState extends State<DiaperOptions> {
           _selectedColor,
           notes: _notesController.text.isNotEmpty ? _notesController.text : null,
         );
-        Fluttertoast.showToast(msg: '尿布记录已添加');
+        Fluttertoast.showToast(msg: l10n.diaper + l10n.success);
       }
       widget.onSaved();
     } catch (e) {
       if (mounted) {
-        String errorMsg = widget.editItem != null ? '更新失败' : '添加失败';
+        String errorMsg = widget.editItem != null ? l10n.updateFailed : l10n.addFailed;
         if (e.toString().contains('403')) {
-          errorMsg = '$errorMsg：没有权限，请重新登录';
+          errorMsg = '$errorMsg: ${l10n.noPermission}';
         } else if (e.toString().contains('DioException')) {
-          errorMsg = '$errorMsg：网络错误，请检查网络连接';
+          errorMsg = '$errorMsg: ${l10n.networkError}';
         }
         Fluttertoast.showToast(
           msg: errorMsg,
@@ -936,6 +972,7 @@ class _DiaperOptionsState extends State<DiaperOptions> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: EdgeInsets.only(
         left: 20,
@@ -953,36 +990,36 @@ class _DiaperOptionsState extends State<DiaperOptions> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              widget.editItem != null ? '编辑尿布记录' : '记录尿布',
+              widget.editItem != null ? '${l10n.edit}${l10n.diaper}' : '${l10n.add}${l10n.diaper}',
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 24),
-            _buildSection('类型'),
+            _buildSection(l10n.type),
             const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
-                  child: _buildCheckbox('湿', _wet, (v) => setState(() => _wet = v ?? true)),
+                  child: _buildCheckbox(l10n.wet, _wet, (v) => setState(() => _wet = v ?? true)),
                 ),
                 Expanded(
-                  child: _buildCheckbox('干/便便', _solid, (v) => setState(() => _solid = v ?? false)),
+                  child: _buildCheckbox(l10n.solid, _solid, (v) => setState(() => _solid = v ?? false)),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            _buildSection('颜色'),
+            _buildSection(l10n.color),
             const SizedBox(height: 8),
             _buildOptions(_colors, _selectedColor, (v) => setState(() => _selectedColor = v)),
             const SizedBox(height: 16),
             TextField(
               controller: _notesController,
               maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: '备注',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.notes,
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 24),
@@ -991,7 +1028,7 @@ class _DiaperOptionsState extends State<DiaperOptions> {
               height: 48,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _save,
-                child: _isLoading ? const CircularProgressIndicator() : Text(widget.editItem != null ? '更新记录' : '保存记录'),
+                child: _isLoading ? const CircularProgressIndicator() : Text(widget.editItem != null ? l10n.save : l10n.confirm),
               ),
             ),
           ],
@@ -1025,9 +1062,8 @@ class _DiaperOptionsState extends State<DiaperOptions> {
       runSpacing: 8,
       children: options.map((option) {
         final isSelected = option == selected;
-        String displayText = _colorMap[option] ?? option;
         return ChoiceChip(
-          label: Text(displayText),
+          label: Text(_getColorName(option)),
           selected: isSelected,
           onSelected: (_) => onChanged(option),
         );
@@ -1094,9 +1130,9 @@ class _TummyTimeOptionsState extends State<TummyTimeOptions> {
   }
 
   Future<void> _save() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() => _isLoading = true);
     try {
-      // 当使用计时器时，使用当前时间作为结束时间
       final actualEndTime = widget.timer != null ? DateTime.now() : _endTime;
       
       if (widget.editItem != null) {
@@ -1112,7 +1148,7 @@ class _TummyTimeOptionsState extends State<TummyTimeOptions> {
           data['notes'] = _notesController.text;
         }
         await ApiService.updateTummyTime(widget.editItem!['id'], data);
-        Fluttertoast.showToast(msg: '俯卧时间已更新');
+        Fluttertoast.showToast(msg: l10n.tummyTimeUpdated);
       } else {
         if (widget.timer != null) {
           await ApiService.addTummyTime(
@@ -1132,16 +1168,16 @@ class _TummyTimeOptionsState extends State<TummyTimeOptions> {
             notes: _notesController.text.isNotEmpty ? _notesController.text : null,
           );
         }
-        Fluttertoast.showToast(msg: '俯卧时间已添加');
+        Fluttertoast.showToast(msg: l10n.tummyTimeRecorded);
       }
       widget.onSaved();
     } catch (e) {
       if (mounted) {
-        String errorMsg = widget.editItem != null ? '更新失败' : '添加失败';
+        String errorMsg = widget.editItem != null ? l10n.updateFailed : l10n.addFailed;
         if (e.toString().contains('403')) {
-          errorMsg = '$errorMsg：没有权限，请重新登录';
+          errorMsg = '$errorMsg: ${l10n.noPermission}';
         } else if (e.toString().contains('DioException')) {
-          errorMsg = '$errorMsg：网络错误，请检查网络连接';
+          errorMsg = '$errorMsg: ${l10n.networkError}';
         }
         Fluttertoast.showToast(
           msg: errorMsg,
@@ -1156,6 +1192,7 @@ class _TummyTimeOptionsState extends State<TummyTimeOptions> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: EdgeInsets.only(
         left: 20,
@@ -1173,7 +1210,7 @@ class _TummyTimeOptionsState extends State<TummyTimeOptions> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              widget.editItem != null ? '编辑俯卧时间' : '记录俯卧时间',
+              widget.editItem != null ? '${l10n.edit}${l10n.tummyTime}' : '${l10n.add}${l10n.tummyTime}',
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -1182,18 +1219,18 @@ class _TummyTimeOptionsState extends State<TummyTimeOptions> {
             const SizedBox(height: 24),
             TextField(
               controller: _milestoneController,
-              decoration: const InputDecoration(
-                labelText: '里程碑 (可选)',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: '${l10n.milestone} (${l10n.notes})',
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _notesController,
               maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: '备注',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.notes,
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 24),
@@ -1202,7 +1239,7 @@ class _TummyTimeOptionsState extends State<TummyTimeOptions> {
               height: 48,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _save,
-                child: _isLoading ? const CircularProgressIndicator() : Text(widget.editItem != null ? '更新记录' : '保存记录'),
+                child: _isLoading ? const CircularProgressIndicator() : Text(widget.editItem != null ? l10n.save : l10n.confirm),
               ),
             ),
           ],
@@ -1262,6 +1299,7 @@ class _PumpingOptionsState extends State<PumpingOptions> {
   }
 
   Future<void> _save() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() => _isLoading = true);
     try {
       double? amount;
@@ -1283,7 +1321,7 @@ class _PumpingOptionsState extends State<PumpingOptions> {
           data['notes'] = _notesController.text;
         }
         await ApiService.updatePumping(widget.editItem!['id'], data);
-        Fluttertoast.showToast(msg: '吸奶记录已更新');
+        Fluttertoast.showToast(msg: l10n.pumping + l10n.success);
       } else {
         await ApiService.addPumping(
           widget.childId,
@@ -1293,16 +1331,16 @@ class _PumpingOptionsState extends State<PumpingOptions> {
           amountUnit: 'ml',
           notes: _notesController.text.isNotEmpty ? _notesController.text : null,
         );
-        Fluttertoast.showToast(msg: '吸奶记录已添加');
+        Fluttertoast.showToast(msg: l10n.pumping + l10n.success);
       }
       widget.onSaved();
     } catch (e) {
       if (mounted) {
-        String errorMsg = widget.editItem != null ? '更新失败' : '添加失败';
+        String errorMsg = widget.editItem != null ? l10n.updateFailed : l10n.addFailed;
         if (e.toString().contains('403')) {
-          errorMsg = '$errorMsg：没有权限，请重新登录';
+          errorMsg = '$errorMsg: ${l10n.noPermission}';
         } else if (e.toString().contains('DioException')) {
-          errorMsg = '$errorMsg：网络错误，请检查网络连接';
+          errorMsg = '$errorMsg: ${l10n.networkError}';
         }
         Fluttertoast.showToast(
           msg: errorMsg,
@@ -1317,6 +1355,7 @@ class _PumpingOptionsState extends State<PumpingOptions> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: EdgeInsets.only(
         left: 20,
@@ -1334,7 +1373,7 @@ class _PumpingOptionsState extends State<PumpingOptions> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              widget.editItem != null ? '编辑吸奶记录' : '记录吸奶',
+              widget.editItem != null ? '${l10n.edit}${l10n.pumping}' : '${l10n.add}${l10n.pumping}',
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -1344,18 +1383,18 @@ class _PumpingOptionsState extends State<PumpingOptions> {
             TextField(
               controller: _amountController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: '奶量 (ml)',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: '${l10n.amount} (ml)',
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _notesController,
               maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: '备注',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.notes,
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 24),
@@ -1364,7 +1403,7 @@ class _PumpingOptionsState extends State<PumpingOptions> {
               height: 48,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _save,
-                child: _isLoading ? const CircularProgressIndicator() : Text(widget.editItem != null ? '更新记录' : '保存记录'),
+                child: _isLoading ? const CircularProgressIndicator() : Text(widget.editItem != null ? l10n.save : l10n.confirm),
               ),
             ),
           ],
@@ -1411,8 +1450,9 @@ class _NoteOptionsState extends State<NoteOptions> {
   }
 
   Future<void> _save() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_noteController.text.isEmpty) {
-      Fluttertoast.showToast(msg: '请输入笔记内容');
+      Fluttertoast.showToast(msg: '${l10n.note}${l10n.error}');
       return;
     }
     
@@ -1424,22 +1464,22 @@ class _NoteOptionsState extends State<NoteOptions> {
           'note': _noteController.text,
         };
         await ApiService.updateNote(widget.editItem!['id'], data);
-        Fluttertoast.showToast(msg: '笔记已更新');
+        Fluttertoast.showToast(msg: l10n.note + l10n.success);
       } else {
         await ApiService.addNote(
           widget.childId,
           _noteController.text,
         );
-        Fluttertoast.showToast(msg: '笔记已添加');
+        Fluttertoast.showToast(msg: l10n.note + l10n.success);
       }
       widget.onSaved();
     } catch (e) {
       if (mounted) {
-        String errorMsg = widget.editItem != null ? '更新失败' : '添加失败';
+        String errorMsg = widget.editItem != null ? l10n.updateFailed : l10n.addFailed;
         if (e.toString().contains('403')) {
-          errorMsg = '$errorMsg：没有权限，请重新登录';
+          errorMsg = '$errorMsg: ${l10n.noPermission}';
         } else if (e.toString().contains('DioException')) {
-          errorMsg = '$errorMsg：网络错误，请检查网络连接';
+          errorMsg = '$errorMsg: ${l10n.networkError}';
         }
         Fluttertoast.showToast(
           msg: errorMsg,
@@ -1454,6 +1494,7 @@ class _NoteOptionsState extends State<NoteOptions> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: EdgeInsets.only(
         left: 20,
@@ -1471,7 +1512,7 @@ class _NoteOptionsState extends State<NoteOptions> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              widget.editItem != null ? '编辑笔记' : '添加笔记',
+              widget.editItem != null ? '${l10n.edit}${l10n.note}' : '${l10n.add}${l10n.note}',
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -1481,9 +1522,9 @@ class _NoteOptionsState extends State<NoteOptions> {
             TextField(
               controller: _noteController,
               maxLines: 5,
-              decoration: const InputDecoration(
-                labelText: '笔记内容',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.content,
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 24),
@@ -1492,7 +1533,7 @@ class _NoteOptionsState extends State<NoteOptions> {
               height: 48,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _save,
-                child: _isLoading ? const CircularProgressIndicator() : Text(widget.editItem != null ? '更新笔记' : '保存笔记'),
+                child: _isLoading ? const CircularProgressIndicator() : Text(widget.editItem != null ? l10n.save : l10n.confirm),
               ),
             ),
           ],
@@ -1558,12 +1599,13 @@ class _MeasurementOptionsState extends State<MeasurementOptions> {
   }
 
   Future<void> _save() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_editingModel == null) {
       if (_weightController.text.isEmpty && 
           _heightController.text.isEmpty && 
           _headCircController.text.isEmpty &&
           _tempController.text.isEmpty) {
-        Fluttertoast.showToast(msg: '请至少输入一项测量值');
+        Fluttertoast.showToast(msg: '${l10n.weight} / ${l10n.height} ${l10n.error}');
         return;
       }
     } else {
@@ -1573,7 +1615,7 @@ class _MeasurementOptionsState extends State<MeasurementOptions> {
       if (_editingModel == 'head circumference' && _headCircController.text.isNotEmpty) hasInput = true;
       if (_editingModel == 'temperature' && _tempController.text.isNotEmpty) hasInput = true;
       if (!hasInput) {
-        Fluttertoast.showToast(msg: '请输入测量值');
+        Fluttertoast.showToast(msg: l10n.weight + l10n.error);
         return;
       }
     }
@@ -1628,7 +1670,7 @@ class _MeasurementOptionsState extends State<MeasurementOptions> {
           }
           await ApiService.updateTemperature(widget.editItem!['id'], data);
         }
-        Fluttertoast.showToast(msg: '测量记录已更新');
+        Fluttertoast.showToast(msg: l10n.weight + l10n.success);
       } else {
         final date = DateTimeUtils.formatDateOnly(DateTime.now());
         final time = DateTimeUtils.formatForApi(DateTime.now());
@@ -1673,16 +1715,16 @@ class _MeasurementOptionsState extends State<MeasurementOptions> {
           );
         }
         
-        Fluttertoast.showToast(msg: '测量记录已添加');
+        Fluttertoast.showToast(msg: l10n.weight + l10n.success);
       }
       widget.onSaved();
     } catch (e) {
       if (mounted) {
-        String errorMsg = widget.editItem != null ? '更新失败' : '添加失败';
+        String errorMsg = widget.editItem != null ? l10n.updateFailed : l10n.addFailed;
         if (e.toString().contains('403')) {
-          errorMsg = '$errorMsg：没有权限，请重新登录';
+          errorMsg = '$errorMsg: ${l10n.noPermission}';
         } else if (e.toString().contains('DioException')) {
-          errorMsg = '$errorMsg：网络错误，请检查网络连接';
+          errorMsg = '$errorMsg: ${l10n.networkError}';
         }
         Fluttertoast.showToast(
           msg: errorMsg,
@@ -1697,11 +1739,12 @@ class _MeasurementOptionsState extends State<MeasurementOptions> {
 
   @override
   Widget build(BuildContext context) {
-    String title = widget.editItem != null ? '编辑身体测量' : '记录身体测量';
-    if (_editingModel == 'weight') title = '编辑体重记录';
-    if (_editingModel == 'height') title = '编辑身高记录';
-    if (_editingModel == 'head circumference') title = '编辑头围记录';
-    if (_editingModel == 'temperature') title = '编辑体温记录';
+    final l10n = AppLocalizations.of(context)!;
+    String title = widget.editItem != null ? '${l10n.edit}${l10n.weight}' : '${l10n.add}${l10n.weight}';
+    if (_editingModel == 'weight') title = '${l10n.edit}${l10n.weightKg}';
+    if (_editingModel == 'height') title = '${l10n.edit}${l10n.heightCm}';
+    if (_editingModel == 'head circumference') title = '${l10n.edit}${l10n.headCircumferenceCm}';
+    if (_editingModel == 'temperature') title = '${l10n.edit}${l10n.temperatureC}';
     
     return Container(
       padding: EdgeInsets.only(
@@ -1731,9 +1774,9 @@ class _MeasurementOptionsState extends State<MeasurementOptions> {
               TextField(
                 controller: _weightController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText: '体重 (kg)',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: '${l10n.weight} (kg)',
+                  border: const OutlineInputBorder(),
                 ),
               ),
             if (_editingModel == null || _editingModel == 'weight')
@@ -1742,9 +1785,9 @@ class _MeasurementOptionsState extends State<MeasurementOptions> {
               TextField(
                 controller: _heightController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText: '身高 (cm)',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: '${l10n.height} (cm)',
+                  border: const OutlineInputBorder(),
                 ),
               ),
             if (_editingModel == null || _editingModel == 'height')
@@ -1753,9 +1796,9 @@ class _MeasurementOptionsState extends State<MeasurementOptions> {
               TextField(
                 controller: _headCircController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText: '头围 (cm)',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: '${l10n.headCircumference} (cm)',
+                  border: const OutlineInputBorder(),
                 ),
               ),
             if ((_editingModel == null || _editingModel == 'head circumference') && 
@@ -1765,18 +1808,18 @@ class _MeasurementOptionsState extends State<MeasurementOptions> {
               TextField(
                 controller: _tempController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText: '体温 (°C)',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: '${l10n.temperature} (°C)',
+                  border: const OutlineInputBorder(),
                 ),
               ),
             const SizedBox(height: 16),
             TextField(
               controller: _notesController,
               maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: '备注',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.notes,
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 24),
@@ -1785,7 +1828,7 @@ class _MeasurementOptionsState extends State<MeasurementOptions> {
               height: 48,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _save,
-                child: _isLoading ? const CircularProgressIndicator() : Text(widget.editItem != null ? '更新记录' : '保存记录'),
+                child: _isLoading ? const CircularProgressIndicator() : Text(widget.editItem != null ? l10n.save : l10n.confirm),
               ),
             ),
           ],
