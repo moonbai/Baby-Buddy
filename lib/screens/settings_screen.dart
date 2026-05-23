@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:babybuddy_app/utils/storage.dart';
+import 'package:babybuddy_app/main.dart';
+import 'package:babybuddy_app/generated/app_localizations.dart';
 
 class SettingsScreen extends StatefulWidget {
   final VoidCallback? onThemeChanged;
@@ -12,6 +14,7 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   String _themeMode = 'system';
+  String _language = 'zh';
   bool _quickReport = false;
   bool _isLoading = true;
 
@@ -24,9 +27,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _loadSettings() async {
     final themeMode = await Storage.getThemeMode();
     final quickReport = await Storage.getQuickReport();
+    final language = await Storage.getLanguage();
     setState(() {
       _themeMode = themeMode!;
       _quickReport = quickReport!;
+      _language = language!;
       _isLoading = false;
     });
   }
@@ -42,11 +47,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await Storage.saveQuickReport(value);
   }
 
+  Future<void> _updateLanguage(String language) async {
+    setState(() => _language = language);
+    await Storage.saveLanguage(language);
+    MyApp.of(context)?.updateLanguage(language);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('设置'),
+        title: Text(AppLocalizations.of(context)!.settings),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -55,6 +66,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 _buildThemeSection(),
                 const SizedBox(height: 24),
+                _buildLanguageSection(),
+                const SizedBox(height: 24),
                 _buildFeaturesSection(),
               ],
             ),
@@ -62,6 +75,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildThemeSection() {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -76,14 +90,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  '主题设置',
+                  l10n.themeSettings,
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
               ],
             ),
             const SizedBox(height: 16),
             Text(
-              '选择应用的主题模式',
+              l10n.chooseTheme,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -91,24 +105,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 16),
             _buildThemeOption(
               icon: Icons.phone_android,
-              title: '跟随系统',
-              subtitle: '自动切换深色/浅色',
+              title: l10n.followSystem,
+              subtitle: l10n.followSystemSubtitle,
               value: 'system',
               groupValue: _themeMode,
               onChanged: _updateThemeMode,
             ),
             _buildThemeOption(
               icon: Icons.wb_sunny,
-              title: '浅色模式',
-              subtitle: '始终使用浅色主题',
+              title: l10n.lightMode,
+              subtitle: l10n.lightModeSubtitle,
               value: 'light',
               groupValue: _themeMode,
               onChanged: _updateThemeMode,
             ),
             _buildThemeOption(
               icon: Icons.dark_mode,
-              title: '深色模式',
-              subtitle: '始终使用深色主题',
+              title: l10n.darkMode,
+              subtitle: l10n.darkModeSubtitle,
               value: 'dark',
               groupValue: _themeMode,
               onChanged: _updateThemeMode,
@@ -116,6 +130,69 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildLanguageSection() {
+    final l10n = AppLocalizations.of(context)!;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.language,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  l10n.languageSettings,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              l10n.chooseLanguage,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+            const SizedBox(height: 16),
+            _buildLanguageOption(
+              title: l10n.chinese,
+              value: 'zh',
+              groupValue: _language,
+              onChanged: _updateLanguage,
+            ),
+            _buildLanguageOption(
+              title: l10n.english,
+              value: 'en',
+              groupValue: _language,
+              onChanged: _updateLanguage,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLanguageOption({
+    required String title,
+    required String value,
+    required String groupValue,
+    required ValueChanged<String> onChanged,
+  }) {
+    return RadioListTile<String>(
+      title: Text(title),
+      value: value,
+      groupValue: groupValue,
+      onChanged: (v) => onChanged(v!),
+      secondary: const Icon(Icons.translate),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 0),
     );
   }
 
@@ -139,6 +216,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildFeaturesSection() {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -153,15 +231,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  '功能设置',
+                  l10n.featureSettings,
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
               ],
             ),
             const SizedBox(height: 16),
             SwitchListTile(
-              title: const Text('快速提报模式'),
-              subtitle: const Text('开启后点击添加按钮显示快速提报选项'),
+              title: Text(l10n.quickReportMode),
+              subtitle: Text(l10n.quickReportModeSubtitle),
               value: _quickReport,
               onChanged: _toggleQuickReport,
               secondary: const Icon(Icons.speed),

@@ -1,0 +1,383 @@
+{
+  "@@locale": "zh",
+  "appTitle": "宝宝助手",
+  "@appTitle": {
+    "description": "应用程序标题"
+  },
+  "settings": "设置",
+  "@settings": {
+    "description": "设置页面标题"
+  },
+  "themeSettings": "主题设置",
+  "@themeSettings": {
+    "description": "主题设置标题"
+  },
+  "languageSettings": "语言设置",
+  "@languageSettings": {
+    "description": "语言设置标题"
+  },
+  "chooseTheme": "选择应用的主题模式",
+  "@chooseTheme": {
+    "description": "选择主题说明"
+  },
+  "followSystem": "跟随系统",
+  "@followSystem": {
+    "description": "跟随系统主题选项"
+  },
+  "followSystemSubtitle": "自动切换深色/浅色",
+  "@followSystemSubtitle": {
+    "description": "跟随系统主题说明"
+  },
+  "lightMode": "浅色模式",
+  "@lightMode": {
+    "description": "浅色主题选项"
+  },
+  "lightModeSubtitle": "始终使用浅色主题",
+  "@lightModeSubtitle": {
+    "description": "浅色主题说明"
+  },
+  "darkMode": "深色模式",
+  "@darkMode": {
+    "description": "深色主题选项"
+  },
+  "darkModeSubtitle": "始终使用深色主题",
+  "@darkModeSubtitle": {
+    "description": "深色主题说明"
+  },
+  "featureSettings": "功能设置",
+  "@featureSettings": {
+    "description": "功能设置标题"
+  },
+  "quickReportMode": "快速提报模式",
+  "@quickReportMode": {
+    "description": "快速提报模式开关"
+  },
+  "quickReportModeSubtitle": "开启后点击添加按钮显示快速提报选项",
+  "@quickReportModeSubtitle": {
+    "description": "快速提报模式说明"
+  },
+  "chooseLanguage": "选择语言",
+  "@chooseLanguage": {
+    "description": "选择语言说明"
+  },
+  "chinese": "简体中文",
+  "@chinese": {
+    "description": "中文语言选项"
+  },
+  "english": "English",
+  "@english": {
+    "description": "英文语言选项"
+  },
+  "login": "登录",
+  "@login": {
+    "description": "登录按钮"
+  },
+  "username": "用户名",
+  "@username": {
+    "description": "用户名输入框标签"
+  },
+  "password": "密码",
+  "@password": {
+    "description": "密码输入框标签"
+  },
+  "serverAddress": "服务器地址",
+  "@serverAddress": {
+    "description": "服务器地址输入框标签"
+  },
+  "pleaseEnterServerAddress": "请输入服务器地址",
+  "@pleaseEnterServerAddress": {
+    "description": "服务器地址为空提示"
+  },
+  "pleaseEnterUsername": "请输入用户名",
+  "@pleaseEnterUsername": {
+    "description": "用户名为空提示"
+  },
+  "pleaseEnterPassword": "请输入密码",
+  "@pleaseEnterPassword": {
+    "description": "密码为空提示"
+  },
+  "loginFailed": "登录失败",
+  "@loginFailed": {
+    "description": "登录失败提示"
+  },
+  "networkError": "网络错误，请检查网络连接",
+  "@networkError": {
+    "description": "网络错误提示"
+  },
+  "add": "添加",
+  "@add": {
+    "description": "添加按钮"
+  },
+  "save": "保存",
+  "@save": {
+    "description": "保存按钮"
+  },
+  "cancel": "取消",
+  "@cancel": {
+    "description": "取消按钮"
+  },
+  "confirm": "确认",
+  "@confirm": {
+    "description": "确认按钮"
+  },
+  "delete": "删除",
+  "@delete": {
+    "description": "删除按钮"
+  },
+  "edit": "编辑",
+  "@edit": {
+    "description": "编辑按钮"
+  },
+  "loading": "加载中...",
+  "@loading": {
+    "description": "加载中提示"
+  },
+  "noData": "暂无数据",
+  "@noData": {
+    "description": "无数据提示"
+  },
+  "selectChild": "选择宝宝",
+  "@selectChild": {
+    "description": "选择宝宝标题"
+  },
+  "noChildSelected": "请先选择宝宝",
+  "@noChildSelected": {
+    "description": "未选择宝宝提示"
+  },
+  "addChild": "添加宝宝",
+  "@addChild": {
+    "description": "添加宝宝按钮"
+  },
+  "childName": "宝宝姓名",
+  "@childName": {
+    "description": "宝宝姓名标签"
+  },
+  "birthday": "生日",
+  "@birthday": {
+    "description": "生日标签"
+  },
+  "feeding": "喂奶",
+  "@feeding": {
+    "description": "喂奶记录类型"
+  },
+  "sleep": "睡眠",
+  "@sleep": {
+    "description": "睡眠记录类型"
+  },
+  "diaper": "尿布",
+  "@diaper": {
+    "description": "尿布记录类型"
+  },
+  "pumping": "吸奶",
+  "@pumping": {
+    "description": "吸奶记录类型"
+  },
+  "tummyTime": "俯卧时间",
+  "@tummyTime": {
+    "description": "俯卧时间记录类型"
+  },
+  "temperature": "体温",
+  "@temperature": {
+    "description": "体温记录类型"
+  },
+  "weight": "体重",
+  "@weight": {
+    "description": "体重记录类型"
+  },
+  "height": "身高",
+  "@height": {
+    "description": "身高记录类型"
+  },
+  "headCircumference": "头围",
+  "@headCircumference": {
+    "description": "头围记录类型"
+  },
+  "startTimer": "启动定时器",
+  "@startTimer": {
+    "description": "启动定时器菜单项"
+  },
+  "quickAdd": "快速添加",
+  "@quickAdd": {
+    "description": "快速添加菜单项"
+  },
+  "timer": "计时器",
+  "@timer": {
+    "description": "计时器标题"
+  },
+  "quickReport": "快速提报",
+  "@quickReport": {
+    "description": "快速提报标题"
+  },
+  "about": "关于",
+  "@about": {
+    "description": "关于页面标题"
+  },
+  "logout": "退出登录",
+  "@logout": {
+    "description": "退出登录菜单项"
+  },
+  "confirmLogout": "确定要退出登录吗？",
+  "@confirmLogout": {
+    "description": "退出登录确认提示"
+  },
+  "refresh": "刷新",
+  "@refresh": {
+    "description": "刷新按钮"
+  },
+  "error": "错误",
+  "@error": {
+    "description": "错误提示"
+  },
+  "success": "成功",
+  "@success": {
+    "description": "成功提示"
+  },
+  "notes": "备注",
+  "@notes": {
+    "description": "备注输入框标签"
+  },
+  "amount": "用量",
+  "@amount": {
+    "description": "用量输入框标签"
+  },
+  "duration": "时长",
+  "@duration": {
+    "description": "时长标签"
+  },
+  "startTime": "开始时间",
+  "@startTime": {
+    "description": "开始时间标签"
+  },
+  "endTime": "结束时间",
+  "@endTime": {
+    "description": "结束时间标签"
+  },
+  "breastMilk": "母乳",
+  "@breastMilk": {
+    "description": "母乳类型"
+  },
+  "formula": "配方奶",
+  "@formula": {
+    "description": "配方奶类型"
+  },
+  "leftBreast": "左侧乳房",
+  "@leftBreast": {
+    "description": "左侧乳房"
+  },
+  "rightBreast": "右侧乳房",
+  "@rightBreast": {
+    "description": "右侧乳房"
+  },
+  "bothBreasts": "双侧",
+  "@bothBreasts": {
+    "description": "双侧"
+  },
+  "bottle": "奶瓶",
+  "@bottle": {
+    "description": "奶瓶"
+  },
+  "spoon": "勺子",
+  "@spoon": {
+    "description": "勺子"
+  },
+  "nap": "小睡",
+  "@nap": {
+    "description": "小睡"
+  },
+  "wet": "湿",
+  "@wet": {
+    "description": "湿尿布"
+  },
+  "solid": "便",
+  "@solid": {
+    "description": "大便尿布"
+  },
+  "wetAndSolid": "湿+便",
+  "@wetAndSolid": {
+    "description": "湿和便尿布"
+  },
+  "change": "更换",
+  "@change": {
+    "description": "更换"
+  },
+  "milkType": "奶类型",
+  "@milkType": {
+    "description": "奶类型标签"
+  },
+  "feedingMethod": "喂养方式",
+  "@feedingMethod": {
+    "description": "喂养方式标签"
+  },
+  "unit": "单位",
+  "@unit": {
+    "description": "单位标签"
+  },
+  "milestone": "里程碑",
+  "@milestone": {
+    "description": "里程碑标签"
+  },
+  "timerRestarted": "计时器已重启",
+  "@timerRestarted": {
+    "description": "计时器重启成功提示"
+  },
+  "timerStopped": "计时器已停止",
+  "@timerStopped": {
+    "description": "计时器停止成功提示"
+  },
+  "recordFeeding": "记录喂奶",
+  "@recordFeeding": {
+    "description": "记录喂奶菜单项"
+  },
+  "recordSleep": "记录睡眠",
+  "@recordSleep": {
+    "description": "记录睡眠菜单项"
+  },
+  "recordTummyTime": "记录俯卧时间",
+  "@recordTummyTime": {
+    "description": "记录俯卧时间菜单项"
+  },
+  "restartTimer": "重启计时器",
+  "@restartTimer": {
+    "description": "重启计时器菜单项"
+  },
+  "stopTimer": "停止计时器",
+  "@stopTimer": {
+    "description": "停止计时器菜单项"
+  },
+  "feedingRecorded": "喂奶记录已添加",
+  "@feedingRecorded": {
+    "description": "喂奶记录添加成功提示"
+  },
+  "feedingUpdated": "喂奶记录已更新",
+  "@feedingUpdated": {
+    "description": "喂奶记录更新成功提示"
+  },
+  "sleepRecorded": "睡眠记录已添加",
+  "@sleepRecorded": {
+    "description": "睡眠记录添加成功提示"
+  },
+  "sleepUpdated": "睡眠记录已更新",
+  "@sleepUpdated": {
+    "description": "睡眠记录更新成功提示"
+  },
+  "tummyTimeRecorded": "俯卧时间已添加",
+  "@tummyTimeRecorded": {
+    "description": "俯卧时间添加成功提示"
+  },
+  "tummyTimeUpdated": "俯卧时间已更新",
+  "@tummyTimeUpdated": {
+    "description": "俯卧时间更新成功提示"
+  },
+  "addFailed": "添加失败",
+  "@addFailed": {
+    "description": "添加失败提示"
+  },
+  "updateFailed": "更新失败",
+  "@updateFailed": {
+    "description": "更新失败提示"
+  },
+  "noPermission": "没有权限，请重新登录",
+  "@noPermission": {
+    "description": "无权限提示"
+  }
+}

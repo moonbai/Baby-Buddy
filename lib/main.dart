@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:babybuddy_app/api/api_service.dart';
 import 'package:babybuddy_app/screens/login_screen.dart';
 import 'package:babybuddy_app/screens/home_screen.dart';
 import 'package:babybuddy_app/utils/storage.dart';
 import 'package:babybuddy_app/theme/app_theme.dart';
+import 'package:babybuddy_app/generated/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,17 +25,26 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   ThemeMode _themeMode = ThemeMode.system;
+  Locale _locale = const Locale('zh');
 
   @override
   void initState() {
     super.initState();
     _loadThemeMode();
+    _loadLanguage();
   }
 
   Future<void> _loadThemeMode() async {
     final mode = await Storage.getThemeMode();
     setState(() {
       _themeMode = _getThemeModeFromString(mode!);
+    });
+  }
+
+  Future<void> _loadLanguage() async {
+    final language = await Storage.getLanguage();
+    setState(() {
+      _locale = Locale(language!);
     });
   }
 
@@ -55,6 +66,13 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  void updateLanguage(String language) {
+    setState(() {
+      _locale = Locale(language);
+    });
+    Storage.saveLanguage(language);
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -62,6 +80,17 @@ class _MyAppState extends State<MyApp> {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: _themeMode,
+      locale: _locale,
+      supportedLocales: const [
+        Locale('zh'),
+        Locale('en'),
+      ],
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       initialRoute: '/',
       routes: {
         '/': (c) => FutureBuilder<String?>(
