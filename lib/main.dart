@@ -3,6 +3,7 @@ import 'package:babybuddy_app/api/api_service.dart';
 import 'package:babybuddy_app/screens/login_screen.dart';
 import 'package:babybuddy_app/screens/home_screen.dart';
 import 'package:babybuddy_app/utils/storage.dart';
+import 'package:babybuddy_app/theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,6 +18,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Baby Buddy',
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
       initialRoute: '/',
       routes: {
         '/': (c) => FutureBuilder<String?>(

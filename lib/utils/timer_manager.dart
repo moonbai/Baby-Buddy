@@ -19,7 +19,7 @@ class TimerManager {
     try {
       final timers = await ApiService.getTimers(childId: childId);
       _timers.clear();
-      _timers.addAll(timers);
+      _timers.addAll(timers.cast<Map<String, dynamic>>());
       _startTimerUpdates();
       _timersController.add(List.from(_timers));
     } catch (e) {
