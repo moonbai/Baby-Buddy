@@ -66,52 +66,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-              Icons.palette, color: Theme.of(context).colorScheme.primary),
-              const SizedBox(width: 12),
-              Text(
-                '主题设置',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            '选择应用的主题模式',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.palette,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
-          ),
-          const SizedBox(height: 16),
-          _buildThemeOption(
-            icon: Icons.phone_android,
-            title: '跟随系统',
-            subtitle: '自动切换深色/浅色',
-            value: 'system',
-            groupValue: _themeMode,
-            onChanged: _updateThemeMode,
-          ),
-          _buildThemeOption(
-            icon: Icons.wb_sunny,
-            title: '浅色模式',
-            subtitle: '始终使用浅色主题',
-            value: 'light',
-            groupValue: _themeMode,
-            onChanged: _updateThemeMode,
-          ),
-          _buildThemeOption(
-            icon: Icons.dark_mode,
-            title: '深色模式',
-            subtitle: '始终使用深色主题',
-            value: 'dark',
-            groupValue: _themeMode,
-            onChanged: _updateThemeMode,
-          ),
-        ],
+                const SizedBox(width: 12),
+                Text(
+                  '主题设置',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '选择应用的主题模式',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+            const SizedBox(height: 16),
+            _buildThemeOption(
+              icon: Icons.phone_android,
+              title: '跟随系统',
+              subtitle: '自动切换深色/浅色',
+              value: 'system',
+              groupValue: _themeMode,
+              onChanged: _updateThemeMode,
+            ),
+            _buildThemeOption(
+              icon: Icons.wb_sunny,
+              title: '浅色模式',
+              subtitle: '始终使用浅色主题',
+              value: 'light',
+              groupValue: _themeMode,
+              onChanged: _updateThemeMode,
+            ),
+            _buildThemeOption(
+              icon: Icons.dark_mode,
+              title: '深色模式',
+              subtitle: '始终使用深色主题',
+              value: 'dark',
+              groupValue: _themeMode,
+              onChanged: _updateThemeMode,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -140,28 +143,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.settings, color: Theme.of(context).colorScheme.primary),
-              const SizedBox(width: 12),
-              Text(
-                '功能设置',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          SwitchListTile(
-            title: const Text('快速提报模式'),
-            subtitle: const Text('开启后点击添加按钮显示快速提报选项'),
-            value: _quickReport,
-            onChanged: _toggleQuickReport,
-            secondary: const Icon(Icons.speed),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 0),
-          ),
-        ],
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.settings,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  '功能设置',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            SwitchListTile(
+              title: const Text('快速提报模式'),
+              subtitle: const Text('开启后点击添加按钮显示快速提报选项'),
+              value: _quickReport,
+              onChanged: _toggleQuickReport,
+              secondary: const Icon(Icons.speed),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 0),
+            ),
+          ],
+        ),
       ),
     );
   }
