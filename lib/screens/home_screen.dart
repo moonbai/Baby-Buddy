@@ -5,10 +5,12 @@ import 'package:babybuddy_app/api/api_service.dart';
 import 'package:babybuddy_app/screens/child_select.dart';
 import 'package:babybuddy_app/screens/quick_add.dart';
 import 'package:babybuddy_app/screens/about_screen.dart';
+import 'package:babybuddy_app/screens/settings_screen.dart';
 import 'package:babybuddy_app/utils/storage.dart';
 import 'package:babybuddy_app/utils/date_time_utils.dart';
 import 'package:babybuddy_app/utils/timer_manager.dart';
 import 'package:babybuddy_app/widgets/timer_card.dart';
+import 'package:babybuddy_app/main.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,12 +28,21 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _serverUrl;
   bool _hasSelectedChild = false;
   List _timers = [];
+  bool _quickReportEnabled = false;
 
   @override
   void initState() {
     super.initState();
+    loadSettings();
     loadTimeline();
     loadTimers();
+  }
+
+  Future<void> loadSettings() async {
+    final quickReport = await Storage.getQuickReport();
+    setState(() {
+      _quickReportEnabled = quickReport!;
+    });
   }
 
   Future<void> loadTimeline() async {
@@ -471,8 +482,28 @@ class _HomeScreenState extends State<HomeScreen> {
                   await Navigator.push(context, MaterialPageRoute(builder: (_) => const ChildSelect()));
                   loadTimeline();
                   break;
+                case 'settings':
+                  final appState = MyApp.of(context);
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => SettingsScreen(
+                        onThemeChanged: () async {
+                          final mode = await Storage.getThemeMode();
+                          if (mounted && mode != null) {
+                            appState?.updateThemeMode(mode);
+                          }
+                        },
+                      ),
+                    ),
+                  );
+                  loadSettings();
+                  break;
                 case 'about':
-                  await Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutScreen()));
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AboutScreen()),
+                  );
                   break;
                 case 'logout':
                   logout();
@@ -485,6 +516,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: ListTile(
                   leading: Icon(Icons.person),
                   title: Text('选择宝宝'),
+                ),
+              ),
+              const PopupMenuItem<String>(
+                value: 'settings',
+                child: ListTile(
+                  leading: Icon(Icons.settings),
+                  title: Text('设置'),
                 ),
               ),
               const PopupMenuItem<String>(
@@ -509,34 +547,11 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButton: _hasSelectedChild
           ? FloatingActionButton(
               onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  builder: (context) => SafeArea(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ListTile(
-                          leading: const Icon(Icons.timer),
-                          title: const Text('启动定时器'),
-                          onTap: () async {
-                            Navigator.pop(context);
-                            await createTimer();
-                          },
-                        ),
-                        const Divider(),
-                        ListTile(
-                          leading: const Icon(Icons.add_circle_outline),
-                          title: const Text('添加记录'),
-                          onTap: () async {
-                            Navigator.pop(context);
-                            await Navigator.push(context, MaterialPageRoute(builder: (_) => const QuickAdd()));
-                            loadTimeline();
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                );
+                if (_quickReportEnabled) {
+                  _showQuickReportOptions();
+                } else {
+                  _showAddMenu();
+                }
               },
               child: const Icon(Icons.add),
             )
@@ -716,6 +731,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final brief = _getRecordBrief(item);
     final timeStr = item['time'] ?? item['start'] ?? item['date'] ?? '';
     final time = _formatTime(timeStr);
+    final theme = Theme.of(context);
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -729,15 +745,19 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (brief.isNotEmpty)
-              Text(brief, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
-            Text(time, style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+              Text(brief, style: TextStyle(
+                color: theme.colorScheme.onSurfaceVariant, fontSize: 13
+              )),
+            Text(time, style: TextStyle(
+              color: theme.colorScheme.outline, fontSize: 12
+            )),
           ],
         ),
         children: [
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
-            color: Colors.grey[50],
+            color: theme.colorScheme.surfaceContainerHighest,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -769,7 +789,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       onPressed: () => deleteRecord(item),
                       icon: const Icon(Icons.delete, size: 18),
                       label: const Text('删除'),
-                      style: TextButton.styleFrom(foregroundColor: Colors.red),
+                      style: TextButton.styleFrom(foregroundColor: theme.colorScheme.error),
                     ),
                   ],
                 ),
@@ -777,6 +797,188 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showAddMenu() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.timer),
+              title: const Text('启动定时器'),
+              onTap: () async {
+                Navigator.pop(context);
+                await createTimer();
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.add_circle_outline),
+              title: const Text('添加记录'),
+              onTap: () async {
+                Navigator.pop(context);
+                await Navigator.push(context, MaterialPageRoute(builder: (_) => const QuickAdd()));
+                loadTimeline();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showQuickReportOptions() {
+    final childId = _selectedChildId;
+    if (childId == null) return;
+    
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('快速提报', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
+            const Divider(),
+            Expanded(
+              child: GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                padding: const EdgeInsets.all(8),
+                children: [
+                  _QuickReportButton(
+                    icon: Icons.restaurant,
+                    label: '喂奶',
+                    color: Colors.orange,
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => QuickAdd(initialType: 'feeding', childId: childId)),
+                      );
+                      loadTimeline();
+                    },
+                  ),
+                  _QuickReportButton(
+                    icon: Icons.bedtime,
+                    label: '睡眠',
+                    color: Colors.blue,
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => QuickAdd(initialType: 'sleep', childId: childId)),
+                      );
+                      loadTimeline();
+                    },
+                  ),
+                  _QuickReportButton(
+                    icon: Icons.baby_changing_station,
+                    label: '尿布',
+                    color: Colors.amber,
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => QuickAdd(initialType: 'change', childId: childId)),
+                      );
+                      loadTimeline();
+                    },
+                  ),
+                  _QuickReportButton(
+                    icon: Icons.self_improvement,
+                    label: '俯卧时间',
+                    color: Colors.green,
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => QuickAdd(initialType: 'tummy_time', childId: childId)),
+                      );
+                      loadTimeline();
+                    },
+                  ),
+                  _QuickReportButton(
+                    icon: Icons.water_drop,
+                    label: '吸奶',
+                    color: Colors.purple,
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => QuickAdd(initialType: 'pumping', childId: childId)),
+                      );
+                      loadTimeline();
+                    },
+                  ),
+                  _QuickReportButton(
+                    icon: Icons.edit_note,
+                    label: '笔记',
+                    color: Colors.teal,
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => QuickAdd(initialType: 'note', childId: childId)),
+                      );
+                      loadTimeline();
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const Divider(),
+            TextButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                _showAddMenu();
+              },
+              icon: const Icon(Icons.more_horiz),
+              label: const Text('更多选项'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _QuickReportButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _QuickReportButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 32),
+              const SizedBox(height: 8),
+              Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ),
       ),
     );
   }

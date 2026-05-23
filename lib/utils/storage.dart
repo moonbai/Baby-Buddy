@@ -31,8 +31,29 @@ class Storage {
     return prefs.getInt('childId');
   }
 
+  static Future<void> saveThemeMode(String mode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('themeMode', mode);
+  }
+
+  static Future<String?> getThemeMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('themeMode') ?? 'system';
+  }
+
+  static Future<void> saveQuickReport(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('quickReport', enabled);
+  }
+
+  static Future<bool?> getQuickReport() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('quickReport') ?? false;
+  }
+
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    await prefs.remove('token');
+    await prefs.remove('childId');
   }
 }

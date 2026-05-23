@@ -9,8 +9,9 @@ import 'package:babybuddy_app/utils/date_time_utils.dart';
 class QuickAdd extends StatefulWidget {
   final Map<String, dynamic>? editItem;
   final int? childId;
+  final String? initialType;
 
-  const QuickAdd({super.key, this.editItem, this.childId});
+  const QuickAdd({super.key, this.editItem, this.childId, this.initialType});
 
   @override
   State<QuickAdd> createState() => _QuickAddState();
@@ -38,11 +39,42 @@ class _QuickAddState extends State<QuickAdd> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _showEditOptions();
       });
+    } else if (widget.initialType != null) {
+      final storedChildId = widget.childId ?? await Storage.getChildId();
+      setState(() {
+        childId = storedChildId;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showInitialTypeOptions();
+      });
     } else {
       final storedChildId = await Storage.getChildId();
       setState(() {
         childId = storedChildId;
       });
+    }
+  }
+
+  void _showInitialTypeOptions() {
+    switch (widget.initialType) {
+      case 'feeding':
+        _showFeedingOptions();
+        break;
+      case 'sleep':
+        _showSleepOptions();
+        break;
+      case 'change':
+        _showDiaperOptions();
+        break;
+      case 'tummy_time':
+        _showTummyTimeOptions();
+        break;
+      case 'pumping':
+        _showPumpingOptions();
+        break;
+      case 'note':
+        _showNoteOptions();
+        break;
     }
   }
 
@@ -466,6 +498,9 @@ class _FeedingOptionsState extends State<FeedingOptions> {
         amount = double.tryParse(_amountController.text);
       }
       
+      // 当使用计时器时，使用当前时间作为结束时间
+      final actualEndTime = widget.timer != null ? DateTime.now() : _endTime;
+      
       if (widget.editItem != null) {
         final data = <String, dynamic>{
           'child': widget.childId,
@@ -488,7 +523,7 @@ class _FeedingOptionsState extends State<FeedingOptions> {
           await ApiService.addFeeding(
             widget.childId,
             DateTimeUtils.formatForApi(_startTime),
-            DateTimeUtils.formatForApi(_endTime),
+            DateTimeUtils.formatForApi(actualEndTime),
             _selectedType,
             _selectedMethod,
             timer: widget.timer!['id'] as int,
@@ -539,9 +574,9 @@ class _FeedingOptionsState extends State<FeedingOptions> {
         top: 20,
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -685,6 +720,9 @@ class _SleepOptionsState extends State<SleepOptions> {
   Future<void> _save() async {
     setState(() => _isLoading = true);
     try {
+      // 当使用计时器时，使用当前时间作为结束时间
+      final actualEndTime = widget.timer != null ? DateTime.now() : _endTime;
+      
       if (widget.editItem != null) {
         final data = <String, dynamic>{
           'child': widget.childId,
@@ -702,7 +740,7 @@ class _SleepOptionsState extends State<SleepOptions> {
           await ApiService.addSleep(
             widget.childId,
             DateTimeUtils.formatForApi(_startTime),
-            DateTimeUtils.formatForApi(_endTime),
+            DateTimeUtils.formatForApi(actualEndTime),
             timer: widget.timer!['id'] as int,
             nap: _isNap,
             notes: _notesController.text.isNotEmpty ? _notesController.text : null,
@@ -747,9 +785,9 @@ class _SleepOptionsState extends State<SleepOptions> {
         top: 20,
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -905,9 +943,9 @@ class _DiaperOptionsState extends State<DiaperOptions> {
         top: 20,
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -1058,6 +1096,9 @@ class _TummyTimeOptionsState extends State<TummyTimeOptions> {
   Future<void> _save() async {
     setState(() => _isLoading = true);
     try {
+      // 当使用计时器时，使用当前时间作为结束时间
+      final actualEndTime = widget.timer != null ? DateTime.now() : _endTime;
+      
       if (widget.editItem != null) {
         final data = <String, dynamic>{
           'child': widget.childId,
@@ -1077,7 +1118,7 @@ class _TummyTimeOptionsState extends State<TummyTimeOptions> {
           await ApiService.addTummyTime(
             widget.childId,
             DateTimeUtils.formatForApi(_startTime),
-            DateTimeUtils.formatForApi(_endTime),
+            DateTimeUtils.formatForApi(actualEndTime),
             timer: widget.timer!['id'] as int,
             milestone: _milestoneController.text.isNotEmpty ? _milestoneController.text : null,
             notes: _notesController.text.isNotEmpty ? _notesController.text : null,
@@ -1122,9 +1163,9 @@ class _TummyTimeOptionsState extends State<TummyTimeOptions> {
         top: 20,
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -1283,9 +1324,9 @@ class _PumpingOptionsState extends State<PumpingOptions> {
         top: 20,
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -1420,9 +1461,9 @@ class _NoteOptionsState extends State<NoteOptions> {
         top: 20,
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -1669,9 +1710,9 @@ class _MeasurementOptionsState extends State<MeasurementOptions> {
         top: 20,
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
         child: Column(

@@ -11,8 +11,49 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+
+  static _MyAppState? of(BuildContext context) =>
+      context.findAncestorStateOfType<_MyAppState>();
+}
+
+class _MyAppState extends State<MyApp> {
+  ThemeMode _themeMode = ThemeMode.system;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadThemeMode();
+  }
+
+  Future<void> _loadThemeMode() async {
+    final mode = await Storage.getThemeMode();
+    setState(() {
+      _themeMode = _getThemeModeFromString(mode!);
+    });
+  }
+
+  ThemeMode _getThemeModeFromString(String mode) {
+    switch (mode) {
+      case 'light':
+        return ThemeMode.light;
+      case 'dark':
+        return ThemeMode.dark;
+      case 'system':
+      default:
+        return ThemeMode.system;
+    }
+  }
+
+  void updateThemeMode(String mode) {
+    setState(() {
+      _themeMode = _getThemeModeFromString(mode);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +61,7 @@ class MyApp extends StatelessWidget {
       title: 'Baby Buddy',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      themeMode: _themeMode,
       initialRoute: '/',
       routes: {
         '/': (c) => FutureBuilder<String?>(
