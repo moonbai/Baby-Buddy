@@ -2,7 +2,7 @@
 
 # Baby Buddy 客户端
 
-一个为 [Baby Buddy](https://github.com/babybuddy/babybuddy) 打造的 Flutter 移动应用客户端，帮助您轻松记录宝宝的日常活动！
+一个使用AI为 [Baby Buddy](https://github.com/babybuddy/babybuddy) 打造的 Flutter 移动应用客户端，帮助您轻松记录宝宝的日常活动！
 
 ## ✨ 功能特点
 
