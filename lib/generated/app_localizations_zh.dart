@@ -4,7 +4,7 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([super.locale = 'zh']);
 
   @override
-  String get appTitle => '宝宝助手';
+  String get appTitle => 'Baby Buddy';
 
   @override
   String get settings => '设置';
@@ -151,7 +151,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get startTimer => '启动定时器';
 
   @override
-  String get quickAdd => '快速添加';
+  String get quickAdd => '快速记录';
 
   @override
   String get timer => '计时器';
@@ -199,6 +199,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get formula => '配方奶';
 
   @override
+  String get fortifiedBreastMilk => '强化母乳';
+
+  @override
+  String get pumpedMilk => '泵出奶';
+
+  @override
   String get leftBreast => '左侧乳房';
 
   @override
@@ -217,22 +223,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nap => '小睡';
 
   @override
+  String get sleeping => '睡觉';
+
+  @override
   String get wet => '湿';
 
   @override
-  String get solid => '便';
+  String get solid => '便便';
 
   @override
-  String get wetAndSolid => '湿+便';
+  String get wetAndSolid => '湿+便便';
 
   @override
   String get change => '更换';
 
   @override
-  String get milkType => '奶类型';
+  String get milkType => '类型';
 
   @override
-  String get feedingMethod => '喂养方式';
+  String get feedingMethod => '方式';
 
   @override
   String get unit => '单位';
@@ -287,4 +296,115 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get noPermission => '没有权限，请重新登录';
+
+  @override
+  String get confirmDelete => '确认删除';
+
+  @override
+  String get confirmDeleteRecord => '确定要删除这条记录吗？';
+
+  @override
+  String get typeNotSupported => '该类型暂不支持编辑';
+
+  @override
+  String get typeNotSupportedDelete => '该类型暂不支持删除';
+
+  @override
+  String get deleteSuccess => '删除成功';
+
+  @override
+  String get loadTimelineFailed => '加载时间线失败';
+
+  @override
+  String get startTimerFailed => '启动定时器失败';
+
+  @override
+  String get timerStarted => '定时器已启动';
+
+  @override
+  String get cannotOpenUrl => '无法打开网页，请先选择宝宝';
+
+  @override
+  String get linkCopied => '链接已复制到剪贴板';
+
+  @override
+  String get clickMenuSelectChild => '点击右上角菜单选择宝宝';
+
+  @override
+  String get reload => '重新加载';
+
+  @override
+  String get loadFailed => '加载失败';
+
+  @override
+  String get noRecords => '暂无记录';
+
+  @override
+  String get clickAddRecord => '点击右下角 + 添加记录';
+
+  @override
+  String get currentBaby => '当前宝宝';
+
+  @override
+  String get notSelected => '未选择';
+
+  @override
+  String get clickCopyLink => '点击复制网页链接';
+
+  @override
+  String get longPressCopyLink => '长按可复制网页链接';
+
+  @override
+  String get addRecord => '添加记录';
+
+  @override
+  String get moreOptions => '更多选项';
+
+  @override
+  String get note => '笔记';
+
+  @override
+  String get content => '内容';
+
+  @override
+  String get date => '日期';
+
+  @override
+  String get time => '时间';
+
+  @override
+  String get color => '颜色';
+
+  @override
+  String get unknown => '未知';
+
+  @override
+  String get yellow => '黄色';
+
+  @override
+  String get brown => '棕色';
+
+  @override
+  String get green => '绿色';
+
+  @override
+  String get other => '其他';
+
+  @override
+  String get type => '类型';
+
+  @override
+  String get method => '方式';
+
+  @override
+  String get weightKg => '体重';
+
+  @override
+  String get heightCm => '身高';
+
+  @override
+  String get headCircumferenceCm => '头围';
+
+  @override
+  String get temperatureC => '体温';
 }

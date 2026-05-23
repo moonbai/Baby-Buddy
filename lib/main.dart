@@ -76,7 +76,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Baby Buddy',
+      onGenerateTitle: (context) => AppLocalizations.of(context)?.appTitle ?? 'Baby Buddy',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: _themeMode,

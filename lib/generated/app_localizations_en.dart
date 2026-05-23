@@ -112,7 +112,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noChildSelected => 'Please select a baby first';
 
   @override
-  String get addChild => 'Add Child';
+  String get addChild => 'Add Baby';
 
   @override
   String get childName => 'Baby Name';
@@ -199,6 +199,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get formula => 'Formula';
 
   @override
+  String get fortifiedBreastMilk => 'Fortified Breast Milk';
+
+  @override
+  String get pumpedMilk => 'Pumped Milk';
+
+  @override
   String get leftBreast => 'Left Breast';
 
   @override
@@ -217,22 +223,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nap => 'Nap';
 
   @override
+  String get sleeping => 'Sleeping';
+
+  @override
   String get wet => 'Wet';
 
   @override
-  String get solid => 'Solid';
+  String get solid => 'Soiled';
 
   @override
-  String get wetAndSolid => 'Wet+Solid';
+  String get wetAndSolid => 'Wet + Soiled';
 
   @override
   String get change => 'Change';
 
   @override
-  String get milkType => 'Milk Type';
+  String get milkType => 'Type';
 
   @override
-  String get feedingMethod => 'Feeding Method';
+  String get feedingMethod => 'Method';
 
   @override
   String get unit => 'Unit';
@@ -287,4 +296,115 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noPermission => 'No permission, please login again';
+
+  @override
+  String get confirmDelete => 'Confirm Delete';
+
+  @override
+  String get confirmDeleteRecord => 'Are you sure you want to delete this record?';
+
+  @override
+  String get typeNotSupported => 'This type is not supported for editing';
+
+  @override
+  String get typeNotSupportedDelete => 'This type is not supported for deletion';
+
+  @override
+  String get deleteSuccess => 'Deleted successfully';
+
+  @override
+  String get loadTimelineFailed => 'Failed to load timeline';
+
+  @override
+  String get startTimerFailed => 'Failed to start timer';
+
+  @override
+  String get timerStarted => 'Timer started';
+
+  @override
+  String get cannotOpenUrl => 'Cannot open URL, please select a baby first';
+
+  @override
+  String get linkCopied => 'Link copied to clipboard';
+
+  @override
+  String get clickMenuSelectChild => 'Click the top right menu to select a baby';
+
+  @override
+  String get reload => 'Reload';
+
+  @override
+  String get loadFailed => 'Load failed';
+
+  @override
+  String get noRecords => 'No records';
+
+  @override
+  String get clickAddRecord => 'Click the + button to add a record';
+
+  @override
+  String get currentBaby => 'Current Baby';
+
+  @override
+  String get notSelected => 'Not selected';
+
+  @override
+  String get clickCopyLink => 'Click to copy web link';
+
+  @override
+  String get longPressCopyLink => 'Long press to copy web link';
+
+  @override
+  String get addRecord => 'Add Record';
+
+  @override
+  String get moreOptions => 'More Options';
+
+  @override
+  String get note => 'Note';
+
+  @override
+  String get content => 'Content';
+
+  @override
+  String get date => 'Date';
+
+  @override
+  String get time => 'Time';
+
+  @override
+  String get color => 'Color';
+
+  @override
+  String get unknown => 'Unknown';
+
+  @override
+  String get yellow => 'Yellow';
+
+  @override
+  String get brown => 'Brown';
+
+  @override
+  String get green => 'Green';
+
+  @override
+  String get other => 'Other';
+
+  @override
+  String get type => 'Type';
+
+  @override
+  String get method => 'Method';
+
+  @override
+  String get weightKg => 'Weight';
+
+  @override
+  String get heightCm => 'Height';
+
+  @override
+  String get headCircumferenceCm => 'Head Circumference';
+
+  @override
+  String get temperatureC => 'Temperature';
 }

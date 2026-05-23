@@ -11,6 +11,7 @@ import 'package:babybuddy_app/utils/date_time_utils.dart';
 import 'package:babybuddy_app/utils/timer_manager.dart';
 import 'package:babybuddy_app/widgets/timer_card.dart';
 import 'package:babybuddy_app/main.dart';
+import 'package:babybuddy_app/generated/app_localizations.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -89,7 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _errorMessage = e.toString();
       });
       if (mounted) {
-        Fluttertoast.showToast(msg: '加载时间线失败: $e');
+        Fluttertoast.showToast(msg: '${AppLocalizations.of(context)?.loadTimelineFailed ?? '加载时间线失败'}: $e');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -114,30 +115,30 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> createTimer() async {
     if (_selectedChildId == null) {
-      Fluttertoast.showToast(msg: '请先选择宝宝');
+      Fluttertoast.showToast(msg: AppLocalizations.of(context)?.noChildSelected ?? '请先选择宝宝');
       return;
     }
 
     try {
       await TimerManager().createTimer(childId: _selectedChildId);
       if (mounted) {
-        Fluttertoast.showToast(msg: '定时器已启动');
+        Fluttertoast.showToast(msg: AppLocalizations.of(context)?.timerStarted ?? '定时器已启动');
       }
     } catch (e) {
       if (mounted) {
-        Fluttertoast.showToast(msg: '启动定时器失败: $e');
+        Fluttertoast.showToast(msg: '${AppLocalizations.of(context)?.startTimerFailed ?? '启动定时器失败'}: $e');
       }
     }
   }
 
   void _openInBrowser() {
     if (_serverUrl == null || _selectedChildId == null) {
-      Fluttertoast.showToast(msg: '无法打开网页，请先选择宝宝');
+      Fluttertoast.showToast(msg: AppLocalizations.of(context)?.cannotOpenUrl ?? '无法打开网页，请先选择宝宝');
       return;
     }
     final url = '$_serverUrl/child/$_selectedChildId/';
     Clipboard.setData(ClipboardData(text: url));
-    Fluttertoast.showToast(msg: '链接已复制到剪贴板:\n$url');
+    Fluttertoast.showToast(msg: '${AppLocalizations.of(context)?.linkCopied ?? '链接已复制到剪贴板'}:\n$url');
   }
 
   Future<void> logout() async {
@@ -157,16 +158,19 @@ class _HomeScreenState extends State<HomeScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('确认删除'),
-        content: const Text('确定要删除这条记录吗？'),
+        title: Text(AppLocalizations.of(context)?.confirmDelete ?? '确认删除'),
+        content: Text(AppLocalizations.of(context)?.confirmDeleteRecord ?? '确定要删除这条记录吗？'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('取消'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? '取消'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('删除', style: TextStyle(color: Colors.red)),
+            child: Text(
+              AppLocalizations.of(context)?.delete ?? '删除',
+              style: const TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -208,10 +212,10 @@ class _HomeScreenState extends State<HomeScreen> {
           await ApiService.deleteTemperature(id);
           break;
         default:
-          Fluttertoast.showToast(msg: '该类型暂不支持删除');
+          Fluttertoast.showToast(msg: AppLocalizations.of(context)?.typeNotSupportedDelete ?? '该类型暂不支持删除');
           return;
       }
-      Fluttertoast.showToast(msg: '删除成功');
+      Fluttertoast.showToast(msg: AppLocalizations.of(context)?.deleteSuccess ?? '删除成功');
       await loadTimeline();
     } catch (e) {
       if (mounted) {
@@ -223,28 +227,29 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _getRecordTitle(dynamic item) {
+    final l10n = AppLocalizations.of(context)!;
     final model = item['model']?.toString() ?? '';
     switch (model) {
       case 'sleep':
-        return '睡眠';
+        return l10n.sleep;
       case 'feeding':
-        return '喂奶';
+        return l10n.feeding;
       case 'change':
-        return '尿布';
+        return l10n.diaper;
       case 'tummy time':
-        return '俯卧时间';
+        return l10n.tummyTime;
       case 'pumping':
-        return '吸奶';
+        return l10n.pumping;
       case 'note':
-        return '笔记';
+        return l10n.note;
       case 'weight':
-        return '体重';
+        return l10n.weight;
       case 'height':
-        return '身高';
+        return l10n.height;
       case 'head circumference':
-        return '头围';
+        return l10n.headCircumference;
       case 'temperature':
-        return '体温';
+        return l10n.temperature;
       default:
         return model;
     }
@@ -307,12 +312,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _getRecordBrief(dynamic item) {
+    final l10n = AppLocalizations.of(context)!;
     final model = item['model']?.toString() ?? '';
     switch (model) {
       case 'sleep':
         final nap = item['nap'] == true;
         final duration = item['duration'];
-        return '${nap ? "小睡" : "睡觉"} ${duration != null ? "($duration)" : ""}';
+        return '${nap ? l10n.nap : l10n.sleeping} ${duration != null ? "($duration)" : ""}';
       case 'feeding':
         final method = item['method'];
         final type = item['type'];
@@ -326,9 +332,9 @@ class _HomeScreenState extends State<HomeScreen> {
         final wet = item['wet'] == true;
         final solid = item['solid'] == true;
         String result = '';
-        if (wet) result += '湿';
-        if (solid) result += (result.isEmpty ? '便便' : '+便便');
-        return result.isEmpty ? '未知' : result;
+        if (wet) result += l10n.wet;
+        if (solid) result += (result.isEmpty ? l10n.solid : '+${l10n.solid}');
+        return result.isEmpty ? l10n.unknown : result;
       case 'pumping':
         final amount = item['amount'];
         return amount != null ? '$amount ml' : '';
@@ -341,6 +347,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _getRecordDetail(dynamic item) {
+    final l10n = AppLocalizations.of(context)!;
     final model = item['model']?.toString() ?? '';
     final buffer = StringBuffer();
 
@@ -351,11 +358,11 @@ class _HomeScreenState extends State<HomeScreen> {
         final start = item['start'];
         final end = item['end'];
         final notes = item['notes'];
-        buffer.writeln('类型: ${nap ? "小睡" : "睡觉"}');
-        if (duration != null) buffer.writeln('时长: $duration');
-        if (start != null) buffer.writeln('开始: ${_formatTime(start)}');
-        if (end != null) buffer.writeln('结束: ${_formatTime(end)}');
-        if (notes != null && notes.toString().isNotEmpty) buffer.writeln('备注: $notes');
+        buffer.writeln('${l10n.type}: ${nap ? l10n.nap : l10n.sleeping}');
+        if (duration != null) buffer.writeln('${l10n.duration}: $duration');
+        if (start != null) buffer.writeln('${l10n.startTime}: ${_formatTime(start)}');
+        if (end != null) buffer.writeln('${l10n.endTime}: ${_formatTime(end)}');
+        if (notes != null && notes.toString().isNotEmpty) buffer.writeln('${l10n.notes}: $notes');
         break;
       case 'feeding':
         final method = item['method'];
@@ -364,12 +371,12 @@ class _HomeScreenState extends State<HomeScreen> {
         final start = item['start'];
         final end = item['end'];
         final notes = item['notes'];
-        if (type != null) buffer.writeln('类型: ${_getFeedingTypeName(type)}');
-        if (method != null) buffer.writeln('方式: ${_getFeedingMethodName(method)}');
-        if (amount != null) buffer.writeln('奶量: $amount ml');
-        if (start != null) buffer.writeln('开始: ${_formatTime(start)}');
-        if (end != null) buffer.writeln('结束: ${_formatTime(end)}');
-        if (notes != null && notes.toString().isNotEmpty) buffer.writeln('备注: $notes');
+        if (type != null) buffer.writeln('${l10n.milkType}: ${_getFeedingTypeName(type)}');
+        if (method != null) buffer.writeln('${l10n.feedingMethod}: ${_getFeedingMethodName(method)}');
+        if (amount != null) buffer.writeln('${l10n.amount}: $amount ml');
+        if (start != null) buffer.writeln('${l10n.startTime}: ${_formatTime(start)}');
+        if (end != null) buffer.writeln('${l10n.endTime}: ${_formatTime(end)}');
+        if (notes != null && notes.toString().isNotEmpty) buffer.writeln('${l10n.notes}: $notes');
         break;
       case 'change':
         final wet = item['wet'] == true;
@@ -377,60 +384,60 @@ class _HomeScreenState extends State<HomeScreen> {
         final color = item['color'];
         final time = item['time'];
         final notes = item['notes'];
-        buffer.writeln('类型: ${wet ? "湿" : ""}${solid ? (wet ? "+便便" : "便便") : ""}');
-        if (color != null && color != 'unknown') buffer.writeln('颜色: ${_getDiaperColorName(color)}');
-        if (time != null) buffer.writeln('时间: ${_formatTime(time)}');
-        if (notes != null && notes.toString().isNotEmpty) buffer.writeln('备注: $notes');
+        buffer.writeln('${l10n.type}: ${wet ? l10n.wet : ""}${solid ? (wet ? "+${l10n.solid}" : l10n.solid) : ""}');
+        if (color != null && color != 'unknown') buffer.writeln('${l10n.color}: ${_getDiaperColorName(color)}');
+        if (time != null) buffer.writeln('${l10n.time}: ${_formatTime(time)}');
+        if (notes != null && notes.toString().isNotEmpty) buffer.writeln('${l10n.notes}: $notes');
         break;
       case 'pumping':
         final amount = item['amount'];
         final start = item['start'];
         final end = item['end'];
         final notes = item['notes'];
-        if (amount != null) buffer.writeln('奶量: $amount ml');
-        if (start != null) buffer.writeln('开始: ${_formatTime(start)}');
-        if (end != null) buffer.writeln('结束: ${_formatTime(end)}');
-        if (notes != null && notes.toString().isNotEmpty) buffer.writeln('备注: $notes');
+        if (amount != null) buffer.writeln('${l10n.amount}: $amount ml');
+        if (start != null) buffer.writeln('${l10n.startTime}: ${_formatTime(start)}');
+        if (end != null) buffer.writeln('${l10n.endTime}: ${_formatTime(end)}');
+        if (notes != null && notes.toString().isNotEmpty) buffer.writeln('${l10n.notes}: $notes');
         break;
       case 'note':
         final note = item['note'];
         final time = item['time'];
-        if (note != null) buffer.writeln('内容: $note');
-        if (time != null) buffer.writeln('时间: ${_formatTime(time)}');
+        if (note != null) buffer.writeln('${l10n.content}: $note');
+        if (time != null) buffer.writeln('${l10n.time}: ${_formatTime(time)}');
         break;
       case 'tummy time':
         final duration = item['duration'];
         final start = item['start'];
         final end = item['end'];
         final milestone = item['milestone'];
-        if (duration != null) buffer.writeln('时长: $duration');
-        if (start != null) buffer.writeln('开始: ${_formatTime(start)}');
-        if (end != null) buffer.writeln('结束: ${_formatTime(end)}');
-        if (milestone != null && milestone.toString().isNotEmpty) buffer.writeln('里程碑: $milestone');
+        if (duration != null) buffer.writeln('${l10n.duration}: $duration');
+        if (start != null) buffer.writeln('${l10n.startTime}: ${_formatTime(start)}');
+        if (end != null) buffer.writeln('${l10n.endTime}: ${_formatTime(end)}');
+        if (milestone != null && milestone.toString().isNotEmpty) buffer.writeln('${l10n.milestone}: $milestone');
         break;
       case 'weight':
         final weight = item['weight'];
         final date = item['date'];
-        if (weight != null) buffer.writeln('体重: $weight kg');
-        if (date != null) buffer.writeln('日期: $date');
+        if (weight != null) buffer.writeln('${l10n.weightKg}: $weight kg');
+        if (date != null) buffer.writeln('${l10n.date}: $date');
         break;
       case 'height':
         final height = item['height'];
         final date = item['date'];
-        if (height != null) buffer.writeln('身高: $height cm');
-        if (date != null) buffer.writeln('日期: $date');
+        if (height != null) buffer.writeln('${l10n.heightCm}: $height cm');
+        if (date != null) buffer.writeln('${l10n.date}: $date');
         break;
       case 'head circumference':
         final circumference = item['circumference'];
         final date = item['date'];
-        if (circumference != null) buffer.writeln('头围: $circumference cm');
-        if (date != null) buffer.writeln('日期: $date');
+        if (circumference != null) buffer.writeln('${l10n.headCircumferenceCm}: $circumference cm');
+        if (date != null) buffer.writeln('${l10n.date}: $date');
         break;
       case 'temperature':
         final temp = item['temperature'];
         final time = item['time'];
-        if (temp != null) buffer.writeln('体温: $temp °C');
-        if (time != null) buffer.writeln('时间: ${_formatTime(time)}');
+        if (temp != null) buffer.writeln('${l10n.temperatureC}: $temp °C');
+        if (time != null) buffer.writeln('${l10n.time}: ${_formatTime(time)}');
         break;
     }
 
@@ -438,42 +445,46 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _getFeedingTypeName(String type) {
-    const types = {
-      'breast milk': '母乳',
-      'formula': '配方奶',
-      'fortified breast milk': '强化母乳',
-      'pumped milk': '泵出奶',
+    final l10n = AppLocalizations.of(context)!;
+    final types = {
+      'breast milk': l10n.breastMilk,
+      'formula': l10n.formula,
+      'fortified breast milk': l10n.fortifiedBreastMilk,
+      'pumped milk': l10n.pumpedMilk,
     };
     return types[type] ?? type;
   }
 
   String _getFeedingMethodName(String method) {
-    const methods = {
-      'left breast': '左侧乳房',
-      'right breast': '右侧乳房',
-      'both breasts': '双侧',
-      'bottle': '奶瓶',
-      'spoon': '勺子',
+    final l10n = AppLocalizations.of(context)!;
+    final methods = {
+      'left breast': l10n.leftBreast,
+      'right breast': l10n.rightBreast,
+      'both breasts': l10n.bothBreasts,
+      'bottle': l10n.bottle,
+      'spoon': l10n.spoon,
     };
     return methods[method] ?? method;
   }
 
   String _getDiaperColorName(String color) {
-    const colors = {
-      'unknown': '未知',
-      'yellow': '黄色',
-      'brown': '棕色',
-      'green': '绿色',
-      'other': '其他',
+    final l10n = AppLocalizations.of(context)!;
+    final colors = {
+      'unknown': l10n.unknown,
+      'yellow': l10n.yellow,
+      'brown': l10n.brown,
+      'green': l10n.green,
+      'other': l10n.other,
     };
     return colors[color] ?? color;
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Baby Buddy'),
+        title: Text(l10n.appTitle),
         actions: [
           PopupMenuButton<String>(
             onSelected: (value) async {
@@ -511,33 +522,27 @@ class _HomeScreenState extends State<HomeScreen> {
               }
             },
             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              const PopupMenuItem<String>(
+              PopupMenuItem<String>(
                 value: 'select_child',
                 child: ListTile(
-                  leading: Icon(Icons.person),
-                  title: Text('选择宝宝'),
+                  leading: const Icon(Icons.person),
+                  title: Text(l10n.selectChild),
                 ),
               ),
-              const PopupMenuItem<String>(
+              PopupMenuItem<String>(
                 value: 'settings',
                 child: ListTile(
-                  leading: Icon(Icons.settings),
-                  title: Text('设置'),
+                  leading: const Icon(Icons.settings),
+                  title: Text(l10n.settings),
                 ),
               ),
-              const PopupMenuItem<String>(
-                value: 'about',
-                child: ListTile(
-                  leading: Icon(Icons.info),
-                  title: Text('关于'),
-                ),
-              ),
+              PopupMenuItem<String>(value: 'about', child: ListTile(leading: const Icon(Icons.info), title: Text(l10n.about))),
               const PopupMenuDivider(),
-              const PopupMenuItem<String>(
+              PopupMenuItem<String>(
                 value: 'logout',
                 child: ListTile(
-                  leading: Icon(Icons.logout, color: Colors.red),
-                  title: Text('退出登录', style: TextStyle(color: Colors.red)),
+                  leading: const Icon(Icons.logout, color: Colors.red),
+                  title: Text(l10n.logout, style: const TextStyle(color: Colors.red)),
                 ),
               ),
             ],
@@ -564,6 +569,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBody() {
+    final l10n = AppLocalizations.of(context)!;
     if (!_hasSelectedChild) {
       return Center(
         child: Column(
@@ -572,12 +578,12 @@ class _HomeScreenState extends State<HomeScreen> {
             Icon(Icons.person_add, size: 80, color: Colors.grey[400]),
             const SizedBox(height: 20),
             Text(
-              '请先选择宝宝',
+              l10n.noChildSelected,
               style: TextStyle(fontSize: 20, color: Colors.grey[600]),
             ),
             const SizedBox(height: 10),
             Text(
-              '点击右上角菜单选择宝宝',
+              l10n.clickMenuSelectChild,
               style: TextStyle(fontSize: 14, color: Colors.grey[500]),
             ),
             const SizedBox(height: 20),
@@ -587,7 +593,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 loadTimeline();
               },
               icon: const Icon(Icons.person),
-              label: const Text('选择宝宝'),
+              label: Text(l10n.selectChild),
             ),
           ],
         ),
@@ -606,14 +612,11 @@ class _HomeScreenState extends State<HomeScreen> {
             Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
             const SizedBox(height: 16),
             Text(
-              '加载失败',
+              l10n.loadFailed,
               style: TextStyle(fontSize: 18, color: Colors.red[300]),
             ),
             const SizedBox(height: 8),
-            ElevatedButton(
-              onPressed: loadTimeline,
-              child: const Text('重新加载'),
-            ),
+            ElevatedButton(onPressed: loadTimeline, child: Text(l10n.reload)),
           ],
         ),
       );
@@ -648,12 +651,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          '当前宝宝',
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        Text(
+                          l10n.currentBaby,
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
                         ),
                         Text(
-                          _selectedChildName ?? '未选择',
+                          _selectedChildName ?? l10n.notSelected,
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                       ],
@@ -661,7 +664,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.open_in_new),
-                    tooltip: '点击复制网页链接',
+                    tooltip: l10n.clickCopyLink,
                     onPressed: _openInBrowser,
                   ),
                 ],
@@ -670,7 +673,7 @@ class _HomeScreenState extends State<HomeScreen> {
               GestureDetector(
                 onLongPress: _openInBrowser,
                 child: Text(
-                  '长按可复制网页链接',
+                  l10n.longPressCopyLink,
                   style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
               ),
@@ -685,14 +688,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Widget> _buildTimersList() {
     return _timers.map((timer) => TimerCard(
-      timer: timer,
-      selectedChildId: _selectedChildId,
-      onTimerStopped: () => loadTimeline(),
-      onTimerUsed: () => loadTimeline(),
-    )).toList();
+          timer: timer,
+          selectedChildId: _selectedChildId,
+          onTimerStopped: () => loadTimeline(),
+          onTimerUsed: () => loadTimeline(),
+        )).toList();
   }
 
   Widget _buildTimelineList() {
+    final l10n = AppLocalizations.of(context)!;
     if (timeline.isEmpty) {
       return Center(
         child: Column(
@@ -701,12 +705,12 @@ class _HomeScreenState extends State<HomeScreen> {
             Icon(Icons.inbox, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
-              '暂无记录',
+              l10n.noRecords,
               style: TextStyle(fontSize: 18, color: Colors.grey[600]),
             ),
             const SizedBox(height: 8),
             Text(
-              '点击右下角 + 添加记录',
+              l10n.clickAddRecord,
               style: TextStyle(fontSize: 14, color: Colors.grey[500]),
             ),
           ],
@@ -725,6 +729,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildRecordCard(dynamic item) {
+    final l10n = AppLocalizations.of(context)!;
     final color = _getRecordColor(item);
     final icon = _getRecordIcon(item);
     final title = _getRecordTitle(item);
@@ -745,12 +750,8 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (brief.isNotEmpty)
-              Text(brief, style: TextStyle(
-                color: theme.colorScheme.onSurfaceVariant, fontSize: 13
-              )),
-            Text(time, style: TextStyle(
-              color: theme.colorScheme.outline, fontSize: 12
-            )),
+              Text(brief, style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 13)),
+            Text(time, style: TextStyle(color: theme.colorScheme.outline, fontSize: 12)),
           ],
         ),
         children: [
@@ -761,10 +762,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  _getRecordDetail(item),
-                  style: const TextStyle(fontSize: 14, height: 1.5),
-                ),
+                Text(_getRecordDetail(item), style: const TextStyle(fontSize: 14, height: 1.5)),
                 const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
@@ -775,20 +773,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         if (childId != null) {
                           await Navigator.push(
                             context,
-                            MaterialPageRoute(
-                              builder: (_) => QuickAdd(editItem: item, childId: childId),
-                            ),
+                            MaterialPageRoute(builder: (_) => QuickAdd(editItem: item, childId: childId)),
                           );
                           loadTimeline();
                         }
                       },
                       icon: const Icon(Icons.edit, size: 18),
-                      label: const Text('编辑'),
+                      label: Text(l10n.edit),
                     ),
                     TextButton.icon(
                       onPressed: () => deleteRecord(item),
                       icon: const Icon(Icons.delete, size: 18),
-                      label: const Text('删除'),
+                      label: Text(l10n.delete),
                       style: TextButton.styleFrom(foregroundColor: theme.colorScheme.error),
                     ),
                   ],
@@ -802,6 +798,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showAddMenu() {
+    final l10n = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
       builder: (context) => SafeArea(
@@ -810,7 +807,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.timer),
-              title: const Text('启动定时器'),
+              title: Text(l10n.startTimer),
               onTap: () async {
                 Navigator.pop(context);
                 await createTimer();
@@ -819,7 +816,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const Divider(),
             ListTile(
               leading: const Icon(Icons.add_circle_outline),
-              title: const Text('添加记录'),
+              title: Text(l10n.addRecord),
               onTap: () async {
                 Navigator.pop(context);
                 await Navigator.push(context, MaterialPageRoute(builder: (_) => const QuickAdd()));
@@ -833,18 +830,19 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showQuickReportOptions() {
+    final l10n = AppLocalizations.of(context)!;
     final childId = _selectedChildId;
     if (childId == null) return;
-    
+
     showModalBottomSheet(
       context: context,
       builder: (context) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text('快速提报', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(l10n.quickReport, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ),
             const Divider(),
             Expanded(
@@ -855,7 +853,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   _QuickReportButton(
                     icon: Icons.restaurant,
-                    label: '喂奶',
+                    label: l10n.feeding,
                     color: Colors.orange,
                     onTap: () async {
                       Navigator.pop(context);
@@ -868,7 +866,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   _QuickReportButton(
                     icon: Icons.bedtime,
-                    label: '睡眠',
+                    label: l10n.sleep,
                     color: Colors.blue,
                     onTap: () async {
                       Navigator.pop(context);
@@ -881,7 +879,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   _QuickReportButton(
                     icon: Icons.baby_changing_station,
-                    label: '尿布',
+                    label: l10n.diaper,
                     color: Colors.amber,
                     onTap: () async {
                       Navigator.pop(context);
@@ -894,7 +892,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   _QuickReportButton(
                     icon: Icons.self_improvement,
-                    label: '俯卧时间',
+                    label: l10n.tummyTime,
                     color: Colors.green,
                     onTap: () async {
                       Navigator.pop(context);
@@ -907,7 +905,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   _QuickReportButton(
                     icon: Icons.water_drop,
-                    label: '吸奶',
+                    label: l10n.pumping,
                     color: Colors.purple,
                     onTap: () async {
                       Navigator.pop(context);
@@ -920,7 +918,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   _QuickReportButton(
                     icon: Icons.edit_note,
-                    label: '笔记',
+                    label: l10n.note,
                     color: Colors.teal,
                     onTap: () async {
                       Navigator.pop(context);
@@ -941,7 +939,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 _showAddMenu();
               },
               icon: const Icon(Icons.more_horiz),
-              label: const Text('更多选项'),
+              label: Text(l10n.moreOptions),
             ),
           ],
         ),
