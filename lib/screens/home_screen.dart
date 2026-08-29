@@ -37,9 +37,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ==================== 新增功能（参考官方原版 Android App）====================
   // 子页左右滑动切换
-  final PageController _pageController = PageController(viewportFraction: 1);
+  PageController? _pageController;
   int _pageIndex = 0;
   List _allChildren = [];
+  bool _isPageSyncing = false; // 防止初始跳转触发 onPageChanged 连锁切换
 
   // 尿布一键速记栏
   bool _diaperWet = false;
@@ -65,9 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _timersSubscription?.cancel();
     _timersSubscription = null;
-    if (mounted) {
-      try { _pageController.dispose(); } catch (_) {}
-    }
+    _pageController?.dispose();
     super.dispose();
   }
 
@@ -216,19 +215,18 @@ class _HomeScreenState extends State<HomeScreen> {
       if (c is Map && c['id'] == childId) { idx = i; break; }
     }
     _pageIndex = idx;
+    // 用 initialPage 重建 controller，避免 animateToPage 触发中间页的 onPageChanged
+    _isPageSyncing = true;
+    _pageController?.dispose();
+    _pageController = PageController(initialPage: idx);
+    // 下一帧释放锁
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_pageController.hasClients) return;
-      if (_pageController.page?.round() != idx) {
-        _pageController.animateToPage(
-          idx,
-          duration: const Duration(milliseconds: 260),
-          curve: Curves.easeOutCubic,
-        );
-      }
+      _isPageSyncing = false;
     });
   }
 
   Future<void> _switchToChildByIndex(int idx) async {
+    if (_isPageSyncing) return; // 初始同步期间忽略
     final list = _allChildren;
     if (idx < 0 || idx >= list.length) return;
     final c = list[idx];
@@ -257,7 +255,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-      height: hasAny ? 132 : 88,
+      height: hasAny ? 148 : 92,
       child: Column(
         children: [
           Row(
@@ -839,10 +837,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: const Icon(Icons.add),
       )
           : null,
-      body: RefreshIndicator(
-        onRefresh: loadTimeline,
-        child: _buildBody(),
-      ),
+      body: _buildBody(),
     );
   }
 
@@ -952,23 +947,34 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         _buildQuickDiaperBar(),
         Expanded(
-          child: PageView.builder(
-            controller: _pageController,
-            physics: (_allChildren.length > 1) ? const PageScrollPhysics() : const NeverScrollableScrollPhysics(),
-            onPageChanged: _switchToChildByIndex,
-            itemCount: _allChildren.isEmpty ? 1 : _allChildren.length,
-            itemBuilder: (ctx, idx) => Column(
-              key: ValueKey('child-page-$idx-${_allChildren.isNotEmpty ? _allChildren[idx]['id'] ?? idx : idx}'),
-              children: [
-                _buildBabyInfoCard(),
-                if (_timers.isNotEmpty) ..._buildTimersList(),
-                Expanded(child: _buildTimelineList()),
-              ],
-            ),
-          ),
+          child: _pageController == null
+              ? _buildTimelineWithRefresh()
+              : PageView.builder(
+                  controller: _pageController!,
+                  physics: (_allChildren.length > 1)
+                      ? const PageScrollPhysics()
+                      : const NeverScrollableScrollPhysics(),
+                  onPageChanged: _switchToChildByIndex,
+                  itemCount: _allChildren.isEmpty ? 1 : _allChildren.length,
+                  itemBuilder: (ctx, idx) => Column(
+                    key: ValueKey('child-page-$idx-${_allChildren.isNotEmpty ? _allChildren[idx]['id'] ?? idx : idx}'),
+                    children: [
+                      _buildBabyInfoCard(),
+                      if (_timers.isNotEmpty) ..._buildTimersList(),
+                      Expanded(child: _buildTimelineWithRefresh()),
+                    ],
+                  ),
+                ),
         ),
         _buildPageIndicator(),
       ],
+    );
+  }
+
+  Widget _buildTimelineWithRefresh() {
+    return RefreshIndicator(
+      onRefresh: loadTimeline,
+      child: _buildTimelineList(),
     );
   }
 
@@ -1070,29 +1076,35 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildTimelineList() {
     if (timeline.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.inbox, size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              l10n.noRecords,
-              style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          const SizedBox(height: 120),
+          Center(
+            child: Column(
+              children: [
+                Icon(Icons.inbox, size: 64, color: Colors.grey[400]),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.noRecords,
+                  style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.clickAddRecord,
+                  style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.clickAddRecord,
-              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
-            ),
-          ],
-        ),
+          ),
+        ],
       );
     }
 
     return ListView.builder(
       itemCount: timeline.length,
       padding: const EdgeInsets.only(bottom: 80),
+      physics: const AlwaysScrollableScrollPhysics(),
       itemBuilder: (c, i) => _buildRecordCard(timeline[i]),
     );
   }
