@@ -686,7 +686,7 @@ class ApiService {
   /// 流程：列出当前 child 的所有 timer → 全部 stop（删除）→ 创建默认的
   /// Feeding / Sleep / TummyTime 三个新计时器。用于快速从杂乱的 quick-timers
   /// 状态恢复成干净的默认布局。
-  static Future<void> recreateDefaultTimers(int childId) async {
+  static Future<void> recreateDefaultTimers(int childId, {List<String>? types}) async {
     final existing = await getTimers(childId: childId, limit: 200);
     // 并行清理（互不依赖）
     await Future.wait(
@@ -695,12 +695,11 @@ class ApiService {
           .whereType<int>()
           .map((id) => stopTimer(id).catchError((_) => null)),
     );
-    // 创建 3 个默认 timer
-    await Future.wait([
-      addTimer(childId: childId, name: 'Feeding'),
-      addTimer(childId: childId, name: 'Sleep'),
-      addTimer(childId: childId, name: 'Tummy Time'),
-    ]);
+    // 默认创建全部 3 个，或按传入的 types 创建
+    final createTypes = types ?? ['Feeding', 'Sleep', 'Tummy Time'];
+    await Future.wait(
+      createTypes.map((name) => addTimer(childId: childId, name: name)),
+    );
   }
 
   // ======================================================================

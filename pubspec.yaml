@@ -1,6 +1,6 @@
 name: babybuddy_app
 description: Baby Buddy Client
-version: 1.0.1+2
+version: 1.0.2+3
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -16,6 +16,7 @@ dependencies:
   fluttertoast: ^8.2.5
   html: ^0.15.4
   url_launcher: ^6.3.0
+  package_info_plus: ^8.0.0
 
 dev_dependencies:
   flutter_test:

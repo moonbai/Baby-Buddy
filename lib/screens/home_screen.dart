@@ -122,10 +122,16 @@ class _HomeScreenState extends State<HomeScreen> {
       if (!mounted) return;
 
       if (selectedChild.isNotEmpty) {
+        final firstName = selectedChild['first_name'] ?? '';
+        final lastName = selectedChild['last_name'] ?? '';
+        // 中文环境下姓在前名在后，其他语言名在前姓在后
+        final locale = Localizations.localeOf(context);
+        final isCJK = locale.languageCode == 'zh' || locale.languageCode == 'ja' || locale.languageCode == 'ko';
+        final displayName = isCJK
+            ? '$lastName$firstName'.trim()
+            : '$firstName $lastName'.trim();
         setState(() {
-          _selectedChildName =
-          '${selectedChild['first_name'] ?? ''} ${selectedChild['last_name'] ?? ''}'
-              .trim();
+          _selectedChildName = displayName;
           _selectedChildId = childId;
         });
       }
@@ -355,34 +361,22 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _recreateDefaultTimersAction() async {
     final childId = _selectedChildId;
-    final name = _selectedChildName ?? '';
     if (childId == null) {
       Fluttertoast.showToast(msg: l10n.noChildSelected);
       return;
     }
-    final ok = await showDialog<bool>(
+
+    final types = await showDialog<List<String>>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        icon: const Icon(Icons.restart_alt_outlined),
-        title: const Text('重建默认定时器'),
-        content: Text(
-          name.isEmpty
-              ? '将清除当前所有计时器并重新创建 Feeding / Sleep / Tummy Time 三个默认计时器。是否继续？'
-              : '将清除 $name 的所有计时器并重新创建 Feeding / Sleep / Tummy Time 三个默认计时器（与 Baby Buddy 官方原版 Android App 相同行为）。是否继续？',
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.cancel)),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('重建')),
-        ],
-      ),
+      builder: (ctx) => _TimerRecreateDialog(),
     );
-    if (ok != true) return;
+    if (types == null || types.isEmpty) return;
 
     Fluttertoast.showToast(msg: '正在重建…');
     try {
-      await ApiService.recreateDefaultTimers(childId);
+      await ApiService.recreateDefaultTimers(childId, types: types);
       await loadTimers();
-      if (mounted) Fluttertoast.showToast(msg: '默认定时器已重建', backgroundColor: Colors.green);
+      if (mounted) Fluttertoast.showToast(msg: '定时器已重建', backgroundColor: Colors.green);
     } catch (e) {
       Fluttertoast.showToast(msg: '重建失败: $e', backgroundColor: Colors.red, toastLength: Toast.LENGTH_LONG);
     }
@@ -400,7 +394,8 @@ class _HomeScreenState extends State<HomeScreen> {
       Fluttertoast.showToast(msg: '该类型暂不支持在网页打开');
       return;
     }
-    final url = '$_serverUrl/$path/$id/change/';
+    // Baby Buddy 网页端记录详情 URL: /<model>/<id>/
+    final url = '$_serverUrl/$path/$id/';
     final uri = Uri.tryParse(url);
     if (uri == null) return;
     try {
@@ -1384,39 +1379,116 @@ class _DiaperQuickButton extends StatelessWidget {
         ? activeColor.withOpacity(0.12)
         : theme.colorScheme.surfaceContainerLow;
 
-    return Material(
-      color: bg,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: borderColor, width: selected ? 2 : 1),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                selected ? activeIcon : icon,
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: borderColor, width: selected ? 2 : 1),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              selected ? activeIcon : icon,
+              color: selected ? activeColor : theme.colorScheme.onSurfaceVariant,
+              size: 28,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 color: selected ? activeColor : theme.colorScheme.onSurfaceVariant,
-                size: 28,
               ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  color: selected ? activeColor : theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
+    );
+  }
+}
+
+// ==================== 辅助组件：重建定时器选择对话框 ====================
+
+class _TimerRecreateDialog extends StatefulWidget {
+  @override
+  State<_TimerRecreateDialog> createState() => _TimerRecreateDialogState();
+}
+
+class _TimerRecreateDialogState extends State<_TimerRecreateDialog> {
+  final Map<String, bool> _selected = {
+    'Feeding': true,
+    'Sleep': true,
+    'Tummy Time': true,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final icons = {
+      'Feeding': Icons.restaurant,
+      'Sleep': Icons.bedtime,
+      'Tummy Time': Icons.self_improvement,
+    };
+    final colors = {
+      'Feeding': Colors.orange,
+      'Sleep': Colors.blue,
+      'Tummy Time': Colors.green,
+    };
+    return AlertDialog(
+      icon: const Icon(Icons.restart_alt_outlined),
+      title: const Text('重建定时器'),
+      content: StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '将清除当前所有计时器，并重新创建选中的计时器。',
+                style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 16),
+              ..._selected.keys.map((name) {
+                final isSelected = _selected[name]!;
+                return CheckboxListTile(
+                  value: isSelected,
+                  onChanged: (v) => setDialogState(() => _selected[name] = v ?? false),
+                  title: Row(
+                    children: [
+                      Icon(icons[name], color: colors[name], size: 22),
+                      const SizedBox(width: 12),
+                      Text(name),
+                    ],
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+                  dense: true,
+                );
+              }),
+            ],
+          );
+        },
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, null),
+          child: const Text('取消'),
+        ),
+        FilledButton(
+          onPressed: () {
+            final types = _selected.entries
+                .where((e) => e.value)
+                .map((e) => e.key)
+                .toList();
+            Navigator.pop(context, types);
+          },
+          child: const Text('重建'),
+        ),
+      ],
     );
   }
 }
