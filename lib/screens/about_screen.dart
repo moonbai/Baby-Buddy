@@ -98,7 +98,7 @@ class _AboutScreenState extends State<AboutScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    _version.isEmpty ? 'v1.0.0' : 'v$_version+$_buildNumber',
+                    _version.isEmpty ? 'v1.0.0' : 'v$_version',
                     style: const TextStyle(
                       fontSize: 14,
                       color: Color(0xFF616161),

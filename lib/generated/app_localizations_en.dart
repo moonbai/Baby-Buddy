@@ -428,4 +428,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get copyrightText => '© 2026 All Rights Reserved';
+
+  @override
+  String get recreateDefaultTimers => 'Recreate Default Timers';
+
+  @override
+  String get recreateTimers => 'Recreate Timers';
+
+  @override
+  String get copyBabyLink => 'Copy Baby Link';
+
+  @override
+  String get feedingSleepTummyTime => 'Feeding / Sleep / Tummy Time';
+
+  @override
+  String get recreate => 'Recreate';
+
+  @override
+  String get willClearAndRecreate => 'Will clear all current timers and recreate selected timers.';
 }

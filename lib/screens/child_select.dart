@@ -133,7 +133,11 @@ class _ChildSelectState extends State<ChildSelect> {
         final firstName = (item['first_name'] ?? '').toString();
         final lastName = (item['last_name'] ?? '').toString();
         final birthDate = item['birth_date']?.toString();
-        final fullName = '$firstName $lastName'.trim();
+        // 仅中文环境下姓在前名在后
+        final isZh = Localizations.localeOf(context).languageCode == 'zh';
+        final fullName = isZh
+            ? '$lastName$firstName'.trim()
+            : '$firstName $lastName'.trim();
         final initial = firstName.isNotEmpty ? firstName[0].toUpperCase() : '?';
 
         return ListTile(

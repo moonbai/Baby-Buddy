@@ -124,10 +124,10 @@ class _HomeScreenState extends State<HomeScreen> {
       if (selectedChild.isNotEmpty) {
         final firstName = selectedChild['first_name'] ?? '';
         final lastName = selectedChild['last_name'] ?? '';
-        // 中文环境下姓在前名在后，其他语言名在前姓在后
+        // 仅中文环境下姓在前名在后，其他语言名在前姓在后
         final locale = Localizations.localeOf(context);
-        final isCJK = locale.languageCode == 'zh' || locale.languageCode == 'ja' || locale.languageCode == 'ko';
-        final displayName = isCJK
+        final isZh = locale.languageCode == 'zh';
+        final displayName = isZh
             ? '$lastName$firstName'.trim()
             : '$firstName $lastName'.trim();
         setState(() {
@@ -258,16 +258,15 @@ class _HomeScreenState extends State<HomeScreen> {
     final solidSelected = _diaperSolid;
     final hasAny = wetSelected || solidSelected;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-      height: hasAny ? 148 : 92,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
               Expanded(
-                child: _DiaperQuickButton(
+                child: _buildDiaperToggle(
                   icon: Icons.water_drop_outlined,
                   activeIcon: Icons.water_drop,
                   label: l10n.wet,
@@ -278,7 +277,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _DiaperQuickButton(
+                child: _buildDiaperToggle(
                   icon: Icons.breakfast_dining_outlined,
                   activeIcon: Icons.breakfast_dining,
                   label: l10n.solid,
@@ -290,7 +289,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           if (hasAny) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
@@ -307,13 +306,58 @@ class _HomeScreenState extends State<HomeScreen> {
                     icon: _savingDiaper
                         ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
                         : const Icon(Icons.check_circle_outline),
-                    label: Text(_savingDiaper ? '…' : '${l10n.diaper} ✓'),
+                    label: Text(_savingDiaper ? '…' : l10n.confirm),
                   ),
                 ),
               ],
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildDiaperToggle({
+    required IconData icon,
+    required IconData activeIcon,
+    required String label,
+    required bool selected,
+    required Color activeColor,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: BoxDecoration(
+          color: selected ? activeColor.withOpacity(0.12) : theme.colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: selected ? activeColor : theme.colorScheme.outlineVariant,
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              selected ? activeIcon : icon,
+              color: selected ? activeColor : theme.colorScheme.onSurfaceVariant,
+              size: 26,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: selected ? activeColor : theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -785,8 +829,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 enabled: _hasSelectedChild,
                 child: ListTile(
                   leading: const Icon(Icons.restart_alt_outlined),
-                  title: const Text('重建默认定时器'),
-                  subtitle: const Text('Feeding / Sleep / Tummy Time'),
+                  title: Text(l10n.recreateDefaultTimers),
+                  subtitle: Text(l10n.feedingSleepTummyTime),
                 ),
               ),
               PopupMenuItem<String>(
@@ -794,7 +838,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 enabled: _hasSelectedChild,
                 child: ListTile(
                   leading: const Icon(Icons.link),
-                  title: const Text('复制宝宝链接'),
+                  title: Text(l10n.copyBabyLink),
                 ),
               ),
               PopupMenuItem<String>(
@@ -1352,67 +1396,6 @@ class _QuickReportButton extends StatelessWidget {
   }
 }
 
-// ==================== 辅助组件：尿布一键速记按钮 ====================
-
-class _DiaperQuickButton extends StatelessWidget {
-  final IconData icon;
-  final IconData activeIcon;
-  final String label;
-  final bool selected;
-  final Color activeColor;
-  final VoidCallback onTap;
-
-  const _DiaperQuickButton({
-    required this.icon,
-    required this.activeIcon,
-    required this.label,
-    required this.selected,
-    required this.activeColor,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final borderColor = selected ? activeColor : theme.colorScheme.outlineVariant;
-    final bg = selected
-        ? activeColor.withOpacity(0.12)
-        : theme.colorScheme.surfaceContainerLow;
-
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: borderColor, width: selected ? 2 : 1),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              selected ? activeIcon : icon,
-              color: selected ? activeColor : theme.colorScheme.onSurfaceVariant,
-              size: 28,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                color: selected ? activeColor : theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 // ==================== 辅助组件：重建定时器选择对话框 ====================
 
 class _TimerRecreateDialog extends StatefulWidget {
@@ -1442,14 +1425,14 @@ class _TimerRecreateDialogState extends State<_TimerRecreateDialog> {
     };
     return AlertDialog(
       icon: const Icon(Icons.restart_alt_outlined),
-      title: const Text('重建定时器'),
+      title: Text(AppLocalizations.of(context)?.recreateTimers ?? 'Recreate Timers'),
       content: StatefulBuilder(
         builder: (ctx, setDialogState) {
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '将清除当前所有计时器，并重新创建选中的计时器。',
+                AppLocalizations.of(context)?.willClearAndRecreate ?? 'Will clear all current timers and recreate selected timers.',
                 style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurfaceVariant),
               ),
               const SizedBox(height: 16),
@@ -1476,7 +1459,7 @@ class _TimerRecreateDialogState extends State<_TimerRecreateDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, null),
-          child: const Text('取消'),
+          child: Text(AppLocalizations.of(context)?.cancel ?? 'Cancel'),
         ),
         FilledButton(
           onPressed: () {
@@ -1486,7 +1469,7 @@ class _TimerRecreateDialogState extends State<_TimerRecreateDialog> {
                 .toList();
             Navigator.pop(context, types);
           },
-          child: const Text('重建'),
+          child: Text(AppLocalizations.of(context)?.recreate ?? 'Recreate'),
         ),
       ],
     );

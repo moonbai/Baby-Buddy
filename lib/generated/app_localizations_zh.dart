@@ -428,4 +428,22 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get copyrightText => '© 2026 保留所有权利';
+
+  @override
+  String get recreateDefaultTimers => '重建默认定时器';
+
+  @override
+  String get recreateTimers => '重建定时器';
+
+  @override
+  String get copyBabyLink => '复制宝宝链接';
+
+  @override
+  String get feedingSleepTummyTime => '喂奶 / 睡眠 / 俯卧时间';
+
+  @override
+  String get recreate => '重建';
+
+  @override
+  String get willClearAndRecreate => '将清除当前所有计时器，并重新创建选中的计时器。';
 }

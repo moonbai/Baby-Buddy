@@ -172,6 +172,12 @@ abstract class AppLocalizations {
   String get projectDesc;
   String get copyrightInfo;
   String get copyrightText;
+  String get recreateDefaultTimers;
+  String get recreateTimers;
+  String get copyBabyLink;
+  String get feedingSleepTummyTime;
+  String get recreate;
+  String get willClearAndRecreate;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
