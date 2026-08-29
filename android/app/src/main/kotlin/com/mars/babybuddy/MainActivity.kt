@@ -1,4 +1,4 @@
-package com.babybuddy.babybuddy_app
+package com.mars.babybuddy
 
 import io.flutter.embedding.android.FlutterActivity
 

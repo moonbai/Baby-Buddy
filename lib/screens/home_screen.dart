@@ -1108,12 +1108,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: InkWell(
-        onLongPress: () => _openRecordInBrowser(item),
-        borderRadius: Theme.of(context).cardTheme.shape is RoundedRectangleBorder
-            ? (Theme.of(context).cardTheme.shape as RoundedRectangleBorder).borderRadius
-            : BorderRadius.circular(12),
-        child: ExpansionTile(
+      child: ExpansionTile(
         leading: CircleAvatar(
           backgroundColor: color.withOpacity(0.2),
           child: Icon(icon, color: color, size: 20),
@@ -1136,6 +1131,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
+        onLongPress: () => _openRecordInBrowser(item),
         children: [
           Container(
             width: double.infinity,
@@ -1178,9 +1174,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ],
-          ),
-        ),  // ExpansionTile
-      ),   // InkWell
+      ),
     );
   }
 
