@@ -33,7 +33,7 @@ class AppTheme {
         foregroundColor: colorScheme.onSurface,
         surfaceTintColor: Colors.transparent,
       ),
-      cardTheme: const CardTheme(
+      cardTheme: CardTheme(
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
