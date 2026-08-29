@@ -50,15 +50,14 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  /// 统一的 401/403 处理：跳回登录页
+  /// 统一的 401/403 处理：跳回登录页（清空整个路由栈）
   Future<void> _handleUnauthorized() async {
     final ctx = _navigatorKey.currentContext;
     if (ctx == null) return;
-    if (!Navigator.of(ctx).canPop()) return;
-    // 用登录页替换整个路由栈
+    // 用登录页替换整个路由栈，忽略 canPop（单层栈也必须跳转）
     Navigator.of(ctx).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
-      (_) => false,
+          (_) => false,
     );
   }
 

@@ -5,6 +5,7 @@ import 'package:babybuddy_app/utils/timer_manager.dart';
 import 'package:babybuddy_app/utils/date_time_utils.dart';
 import 'package:babybuddy_app/screens/quick_add.dart';
 import 'package:babybuddy_app/generated/app_localizations.dart';
+import 'package:babybuddy_app/generated/app_localizations_en.dart';
 
 class TimerCard extends StatefulWidget {
   final Map<String, dynamic> timer;
@@ -29,7 +30,7 @@ class _TimerCardState extends State<TimerCard> {
   Duration _currentDuration = Duration.zero;
 
   AppLocalizations get l10n =>
-      AppLocalizations.of(context) ?? _FallbackEnLocalizations();
+      AppLocalizations.of(context) ?? AppLocalizationsEn();
 
   @override
   void initState() {
@@ -271,19 +272,4 @@ class _TimerCardState extends State<TimerCard> {
   }
 }
 
-/// TimerCard 内用到的英文字段兜底，仅在极少数未加载完本地化场景使用
-class _FallbackEnLocalizations implements AppLocalizations {
-  @override String get recordFeeding => 'Record Feeding';
-  @override String get recordSleep => 'Record Sleep';
-  @override String get recordTummyTime => 'Record Tummy Time';
-  @override String get restartTimer => 'Restart Timer';
-  @override String get stopTimer => 'Stop Timer';
-  @override String get timerRestarted => 'Timer restarted';
-  @override String get timerStopped => 'Timer stopped';
-  @override String get noChildSelected => 'Please select a baby first';
-  @override String get timer => 'Timer';
-  @override String get addFailed => 'Add failed';
-  @override String get updateFailed => 'Update failed';
 
-  @override dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}

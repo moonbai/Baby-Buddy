@@ -14,6 +14,7 @@ import 'package:babybuddy_app/utils/timer_manager.dart';
 import 'package:babybuddy_app/widgets/timer_card.dart';
 import 'package:babybuddy_app/main.dart';
 import 'package:babybuddy_app/generated/app_localizations.dart';
+import 'package:babybuddy_app/generated/app_localizations_en.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -36,9 +37,9 @@ class _HomeScreenState extends State<HomeScreen> {
   /// 保存 StreamSubscription，防止内存泄漏
   StreamSubscription<List<Map<String, dynamic>>>? _timersSubscription;
 
-  /// 便捷获取当前语言包（保证非空，出问题用英文兜底）
+  /// 便捷获取当前语言包（保证非空，出问题用英文兜底 AppLocalizationsEn）
   AppLocalizations get l10n =>
-      AppLocalizations.of(context) ?? _EnglishFallbackLocalizations();
+      AppLocalizations.of(context) ?? AppLocalizationsEn();
 
   @override
   void initState() {
@@ -1037,85 +1038,4 @@ class _QuickReportButton extends StatelessWidget {
   }
 }
 
-// ============== 兜底 l10n（极少数情况下系统还没加载好本地化才会使用） ==============
 
-class _EnglishFallbackLocalizations implements AppLocalizations {
-  @override String get appTitle => 'Baby Buddy';
-  @override String get sleep => 'Sleep';
-  @override String get feeding => 'Feeding';
-  @override String get diaper => 'Diaper';
-  @override String get tummyTime => 'Tummy Time';
-  @override String get pumping => 'Pumping';
-  @override String get note => 'Note';
-  @override String get weight => 'Weight';
-  @override String get height => 'Height';
-  @override String get headCircumference => 'Head Circumference';
-  @override String get temperature => 'Temperature';
-  @override String get noChildSelected => 'No child selected';
-  @override String get clickMenuSelectChild => 'Click the menu to select a child';
-  @override String get selectChild => 'Select Child';
-  @override String get settings => 'Settings';
-  @override String get about => 'About';
-  @override String get logout => 'Logout';
-  @override String get startTimer => 'Start Timer';
-  @override String get addRecord => 'Add Record';
-  @override String get quickReport => 'Quick Report';
-  @override String get moreOptions => 'More Options';
-  @override String get timerStarted => 'Timer started';
-  @override String get startTimerFailed => 'Failed to start timer';
-  @override String get cannotOpenUrl => 'Cannot copy link, please select a child first';
-  @override String get linkCopied => 'Link copied to clipboard';
-  @override String get loadFailed => 'Failed to load';
-  @override String get reload => 'Reload';
-  @override String get noRecords => 'No records yet';
-  @override String get clickAddRecord => 'Click + to add a record';
-  @override String get confirmDelete => 'Confirm Delete';
-  @override String get confirmDeleteRecord => 'Are you sure you want to delete this record?';
-  @override String get cancel => 'Cancel';
-  @override String get delete => 'Delete';
-  @override String get deleteSuccess => 'Deleted successfully';
-  @override String get typeNotSupportedDelete => 'This type does not support deletion';
-  @override String get edit => 'Edit';
-  @override String get currentBaby => 'Current Baby';
-  @override String get notSelected => 'Not Selected';
-  @override String get clickCopyLink => 'Click to copy link';
-  @override String get longPressCopyLink => 'Long press or icon to copy link';
-  @override String get loadTimelineFailed => 'Failed to load timeline';
-  @override String get nap => 'Nap';
-  @override String get sleeping => 'Sleeping';
-  @override String get duration => 'Duration';
-  @override String get startTime => 'Start';
-  @override String get endTime => 'End';
-  @override String get notes => 'Notes';
-  @override String get type => 'Type';
-  @override String get milkType => 'Milk Type';
-  @override String get feedingMethod => 'Feeding Method';
-  @override String get amount => 'Amount';
-  @override String get time => 'Time';
-  @override String get color => 'Color';
-  @override String get wet => 'Wet';
-  @override String get solid => 'Solid';
-  @override String get unknown => 'Unknown';
-  @override String get content => 'Content';
-  @override String get milestone => 'Milestone';
-  @override String get weightKg => 'Weight';
-  @override String get date => 'Date';
-  @override String get heightCm => 'Height';
-  @override String get headCircumferenceCm => 'Head Circumference';
-  @override String get temperatureC => 'Temperature';
-  @override String get breastMilk => 'Breast Milk';
-  @override String get formula => 'Formula';
-  @override String get fortifiedBreastMilk => 'Fortified Breast Milk';
-  @override String get pumpedMilk => 'Pumped Milk';
-  @override String get leftBreast => 'Left Breast';
-  @override String get rightBreast => 'Right Breast';
-  @override String get bothBreasts => 'Both Breasts';
-  @override String get bottle => 'Bottle';
-  @override String get spoon => 'Spoon';
-  @override String get yellow => 'Yellow';
-  @override String get brown => 'Brown';
-  @override String get green => 'Green';
-  @override String get other => 'Other';
-
-  @override dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}

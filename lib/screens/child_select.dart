@@ -3,6 +3,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:babybuddy_app/api/api_service.dart';
 import 'package:babybuddy_app/utils/storage.dart';
 import 'package:babybuddy_app/generated/app_localizations.dart';
+import 'package:babybuddy_app/generated/app_localizations_en.dart';
 
 class ChildSelect extends StatefulWidget {
   const ChildSelect({super.key});
@@ -17,7 +18,7 @@ class _ChildSelectState extends State<ChildSelect> {
   String? _errorMessage;
 
   AppLocalizations get l10n =>
-      AppLocalizations.of(context) ?? _FallbackEnLocalizations();
+      AppLocalizations.of(context) ?? AppLocalizationsEn();
 
   @override
   void initState() {
@@ -170,14 +171,4 @@ class _ChildSelectState extends State<ChildSelect> {
   }
 }
 
-/// ChildSelect 内用到的英文字段兜底
-class _FallbackEnLocalizations implements AppLocalizations {
-  @override String get selectChild => 'Select Baby';
-  @override String get loadFailed => 'Load failed';
-  @override String get reload => 'Reload';
-  @override String get birthday => 'Birthday';
-  @override String get unknown => 'Unknown';
-  @override String get error => 'Error';
 
-  @override dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}
