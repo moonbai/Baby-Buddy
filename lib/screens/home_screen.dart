@@ -1108,7 +1108,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: ExpansionTile(
+      child: GestureDetector(
+        onLongPress: () => _openRecordInBrowser(item),
+        behavior: HitTestBehavior.translucent,
+        child: ExpansionTile(
         leading: CircleAvatar(
           backgroundColor: color.withOpacity(0.2),
           child: Icon(icon, color: color, size: 20),
@@ -1131,7 +1134,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-        onLongPress: () => _openRecordInBrowser(item),
         children: [
           Container(
             width: double.infinity,
@@ -1174,6 +1176,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }
