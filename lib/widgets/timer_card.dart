@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:babybuddy_app/utils/timer_manager.dart';
 import 'package:babybuddy_app/utils/date_time_utils.dart';
 import 'package:babybuddy_app/screens/quick_add.dart';
+import 'package:babybuddy_app/generated/app_localizations.dart';
 
 class TimerCard extends StatefulWidget {
   final Map<String, dynamic> timer;
@@ -26,6 +28,9 @@ class _TimerCardState extends State<TimerCard> {
   late StreamSubscription _timerSubscription;
   Duration _currentDuration = Duration.zero;
 
+  AppLocalizations get l10n =>
+      AppLocalizations.of(context) ?? _FallbackEnLocalizations();
+
   @override
   void initState() {
     super.initState();
@@ -42,9 +47,11 @@ class _TimerCardState extends State<TimerCard> {
   }
 
   void _updateDuration() {
+    final start = widget.timer['start'];
+    if (start is! String) return;
     if (mounted) {
       setState(() {
-        _currentDuration = TimerManager.calculateDuration(widget.timer['start'] as String);
+        _currentDuration = TimerManager.calculateDuration(start);
       });
     }
   }
@@ -58,7 +65,7 @@ class _TimerCardState extends State<TimerCard> {
           children: [
             ListTile(
               leading: const Icon(Icons.restaurant),
-              title: const Text('记录喂奶'),
+              title: Text(l10n.recordFeeding),
               onTap: () {
                 Navigator.pop(context);
                 _useTimerForFeeding();
@@ -66,7 +73,7 @@ class _TimerCardState extends State<TimerCard> {
             ),
             ListTile(
               leading: const Icon(Icons.bedtime),
-              title: const Text('记录睡眠'),
+              title: Text(l10n.recordSleep),
               onTap: () {
                 Navigator.pop(context);
                 _useTimerForSleep();
@@ -74,7 +81,7 @@ class _TimerCardState extends State<TimerCard> {
             ),
             ListTile(
               leading: const Icon(Icons.accessibility_new),
-              title: const Text('记录俯卧时间'),
+              title: Text(l10n.recordTummyTime),
               onTap: () {
                 Navigator.pop(context);
                 _useTimerForTummyTime();
@@ -83,7 +90,7 @@ class _TimerCardState extends State<TimerCard> {
             const Divider(),
             ListTile(
               leading: const Icon(Icons.refresh, color: Colors.orange),
-              title: const Text('重启计时器'),
+              title: Text(l10n.restartTimer),
               onTap: () {
                 Navigator.pop(context);
                 _restartTimer();
@@ -91,7 +98,7 @@ class _TimerCardState extends State<TimerCard> {
             ),
             ListTile(
               leading: const Icon(Icons.stop, color: Colors.red),
-              title: const Text('停止计时器'),
+              title: Text(l10n.stopTimer),
               onTap: () {
                 Navigator.pop(context);
                 _stopTimer();
@@ -104,123 +111,114 @@ class _TimerCardState extends State<TimerCard> {
   }
 
   Future<void> _useTimerForFeeding() async {
-    if (widget.selectedChildId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请先选择宝宝')),
-      );
+    final childId = widget.selectedChildId;
+    if (childId == null) {
+      Fluttertoast.showToast(msg: l10n.noChildSelected);
       return;
     }
-
-    if (mounted) {
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        builder: (context) => FeedingOptions(
-          childId: widget.selectedChildId!,
-          editItem: null,
-          timer: widget.timer,
-          onSaved: () {
-            widget.onTimerUsed?.call();
-            Navigator.pop(context);
-          },
-        ),
-      );
-    }
+    if (!mounted) return;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => FeedingOptions(
+        childId: childId,
+        editItem: null,
+        timer: widget.timer,
+        onSaved: () {
+          widget.onTimerUsed?.call();
+          Navigator.pop(context);
+        },
+      ),
+    );
   }
 
   Future<void> _useTimerForSleep() async {
-    if (widget.selectedChildId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请先选择宝宝')),
-      );
+    final childId = widget.selectedChildId;
+    if (childId == null) {
+      Fluttertoast.showToast(msg: l10n.noChildSelected);
       return;
     }
-
-    if (mounted) {
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        builder: (context) => SleepOptions(
-          childId: widget.selectedChildId!,
-          editItem: null,
-          timer: widget.timer,
-          onSaved: () {
-            widget.onTimerUsed?.call();
-            Navigator.pop(context);
-          },
-        ),
-      );
-    }
+    if (!mounted) return;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => SleepOptions(
+        childId: childId,
+        editItem: null,
+        timer: widget.timer,
+        onSaved: () {
+          widget.onTimerUsed?.call();
+          Navigator.pop(context);
+        },
+      ),
+    );
   }
 
   Future<void> _useTimerForTummyTime() async {
-    if (widget.selectedChildId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请先选择宝宝')),
-      );
+    final childId = widget.selectedChildId;
+    if (childId == null) {
+      Fluttertoast.showToast(msg: l10n.noChildSelected);
       return;
     }
-
-    if (mounted) {
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        builder: (context) => TummyTimeOptions(
-          childId: widget.selectedChildId!,
-          editItem: null,
-          timer: widget.timer,
-          onSaved: () {
-            widget.onTimerUsed?.call();
-            Navigator.pop(context);
-          },
-        ),
-      );
-    }
+    if (!mounted) return;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => TummyTimeOptions(
+        childId: childId,
+        editItem: null,
+        timer: widget.timer,
+        onSaved: () {
+          widget.onTimerUsed?.call();
+          Navigator.pop(context);
+        },
+      ),
+    );
   }
 
   Future<void> _restartTimer() async {
+    final timerId = widget.timer['id'];
+    if (timerId is! int) {
+      if (mounted) Fluttertoast.showToast(msg: l10n.addFailed);
+      return;
+    }
     try {
-      await TimerManager().restartTimer(widget.timer['id'] as int);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('计时器已重启')),
-        );
-      }
+      await TimerManager().restartTimer(timerId);
+      if (mounted) Fluttertoast.showToast(msg: l10n.timerRestarted);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('重启失败: $e')),
-        );
-      }
+      if (mounted) Fluttertoast.showToast(msg: '${l10n.updateFailed}: $e');
     }
   }
 
   Future<void> _stopTimer() async {
+    final timerId = widget.timer['id'];
+    if (timerId is! int) {
+      if (mounted) Fluttertoast.showToast(msg: l10n.addFailed);
+      return;
+    }
     try {
-      await TimerManager().stopTimer(widget.timer['id'] as int);
+      await TimerManager().stopTimer(timerId);
       widget.onTimerStopped?.call();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('计时器已停止')),
-        );
-      }
+      if (mounted) Fluttertoast.showToast(msg: l10n.timerStopped);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('停止失败: $e')),
-        );
-      }
+      if (mounted) Fluttertoast.showToast(msg: '${l10n.updateFailed}: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final name = widget.timer['name'] as String?;
+    final timerId = widget.timer['id'];
     final durationText = TimerManager.formatDuration(_currentDuration);
+    final theme = Theme.of(context);
+    final iconBg = theme.brightness == Brightness.dark
+        ? Colors.orange.withOpacity(0.2)
+        : Colors.orange.shade100;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: InkWell(
+        borderRadius: BorderRadius.circular(12),
         onTap: () => _showUseTimerOptions(context),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -229,7 +227,7 @@ class _TimerCardState extends State<TimerCard> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.orange.shade100,
+                  color: iconBg,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
@@ -244,13 +242,14 @@ class _TimerCardState extends State<TimerCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      name ?? '计时器 #${widget.timer['id']}',
-                      style: Theme.of(context).textTheme.titleMedium,
+                      name ?? '${l10n.timer} #$timerId',
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       durationText,
-                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                      style: theme.textTheme.headlineMedium?.copyWith(
                             fontFamily: 'monospace',
                             color: Colors.orange,
                             fontWeight: FontWeight.bold,
@@ -260,6 +259,7 @@ class _TimerCardState extends State<TimerCard> {
                 ),
               ),
               IconButton(
+                tooltip: l10n.stopTimer,
                 icon: const Icon(Icons.stop, color: Colors.red),
                 onPressed: _stopTimer,
               ),
@@ -269,4 +269,21 @@ class _TimerCardState extends State<TimerCard> {
       ),
     );
   }
+}
+
+/// TimerCard 内用到的英文字段兜底，仅在极少数未加载完本地化场景使用
+class _FallbackEnLocalizations implements AppLocalizations {
+  @override String get recordFeeding => 'Record Feeding';
+  @override String get recordSleep => 'Record Sleep';
+  @override String get recordTummyTime => 'Record Tummy Time';
+  @override String get restartTimer => 'Restart Timer';
+  @override String get stopTimer => 'Stop Timer';
+  @override String get timerRestarted => 'Timer restarted';
+  @override String get timerStopped => 'Timer stopped';
+  @override String get noChildSelected => 'Please select a baby first';
+  @override String get timer => 'Timer';
+  @override String get addFailed => 'Add failed';
+  @override String get updateFailed => 'Update failed';
+
+  @override dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

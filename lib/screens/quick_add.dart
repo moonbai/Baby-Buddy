@@ -640,6 +640,10 @@ class _FeedingOptionsState extends State<FeedingOptions> {
             const SizedBox(height: 8),
             _buildOptions(_feedingMethods, _selectedMethod, (v) => setState(() => _selectedMethod = v), _getMethodName),
             const SizedBox(height: 16),
+            _buildDateTimeField(context, l10n.startTime, _startTime, (dt) => setState(() => _startTime = dt)),
+            const SizedBox(height: 12),
+            _buildDateTimeField(context, l10n.endTime, _endTime, (dt) => setState(() => _endTime = dt)),
+            const SizedBox(height: 16),
             TextField(
               controller: _amountController,
               keyboardType: TextInputType.number,
@@ -859,6 +863,10 @@ class _SleepOptionsState extends State<SleepOptions> {
               ],
             ),
             const SizedBox(height: 16),
+            _buildDateTimeField(context, l10n.startTime, _startTime, (dt) => setState(() => _startTime = dt)),
+            const SizedBox(height: 12),
+            _buildDateTimeField(context, l10n.endTime, _endTime, (dt) => setState(() => _endTime = dt)),
+            const SizedBox(height: 16),
             TextField(
               controller: _notesController,
               maxLines: 3,
@@ -904,6 +912,7 @@ class _DiaperOptionsState extends State<DiaperOptions> {
   final _colors = const ['unknown', 'yellow', 'brown', 'green', 'other'];
   String _selectedColor = 'unknown';
   bool _isLoading = false;
+  DateTime _changeTime = DateTime.now();
   final TextEditingController _notesController = TextEditingController();
 
   @override
@@ -914,6 +923,9 @@ class _DiaperOptionsState extends State<DiaperOptions> {
       _wet = item['wet'] ?? true;
       _solid = item['solid'] ?? false;
       _selectedColor = item['color'] ?? 'unknown';
+      if (item['time'] != null) {
+        _changeTime = DateTimeUtils.parseServerTime(item['time']);
+      }
       if (item['notes'] != null) {
         _notesController.text = item['notes'].toString();
       }
@@ -951,7 +963,7 @@ class _DiaperOptionsState extends State<DiaperOptions> {
       if (widget.editItem != null) {
         final data = <String, dynamic>{
           'child': widget.childId,
-          'time': widget.editItem!['time'] ?? DateTimeUtils.formatForApi(DateTime.now()),
+          'time': DateTimeUtils.formatForApi(_changeTime),
           'wet': _wet,
           'solid': _solid,
           'color': _selectedColor,
@@ -960,17 +972,17 @@ class _DiaperOptionsState extends State<DiaperOptions> {
           data['notes'] = _notesController.text;
         }
         await ApiService.updateDiaper(widget.editItem!['id'], data);
-        Fluttertoast.showToast(msg: l10n.deleteSuccess);
+        Fluttertoast.showToast(msg: l10n.success, backgroundColor: Colors.green);
       } else {
         await ApiService.addDiaper(
           widget.childId,
-          DateTimeUtils.formatForApi(DateTime.now()),
+          DateTimeUtils.formatForApi(_changeTime),
           _wet,
           _solid,
           _selectedColor,
           notes: _notesController.text.isNotEmpty ? _notesController.text : null,
         );
-        Fluttertoast.showToast(msg: l10n.diaper + l10n.success);
+        Fluttertoast.showToast(msg: l10n.success, backgroundColor: Colors.green);
       }
       widget.onSaved();
     } catch (e) {
@@ -1035,6 +1047,8 @@ class _DiaperOptionsState extends State<DiaperOptions> {
             _buildSection(l10n.color),
             const SizedBox(height: 8),
             _buildOptions(_colors, _selectedColor, (v) => setState(() => _selectedColor = v)),
+            const SizedBox(height: 16),
+            _buildDateTimeField(context, l10n.time, _changeTime, (dt) => setState(() => _changeTime = dt)),
             const SizedBox(height: 16),
             TextField(
               controller: _notesController,
@@ -1250,6 +1264,10 @@ class _TummyTimeOptionsState extends State<TummyTimeOptions> {
               ),
             ),
             const SizedBox(height: 24),
+            _buildDateTimeField(context, l10n.startTime, _startTime, (dt) => setState(() => _startTime = dt)),
+            const SizedBox(height: 12),
+            _buildDateTimeField(context, l10n.endTime, _endTime, (dt) => setState(() => _endTime = dt)),
+            const SizedBox(height: 16),
             TextField(
               controller: _milestoneController,
               decoration: InputDecoration(
@@ -1360,7 +1378,7 @@ class _PumpingOptionsState extends State<PumpingOptions> {
           data['notes'] = _notesController.text;
         }
         await ApiService.updatePumping(widget.editItem!['id'], data);
-        Fluttertoast.showToast(msg: l10n.pumping + l10n.success);
+        Fluttertoast.showToast(msg: l10n.success, backgroundColor: Colors.green);
       } else {
         await ApiService.addPumping(
           widget.childId,
@@ -1370,7 +1388,7 @@ class _PumpingOptionsState extends State<PumpingOptions> {
           amountUnit: 'ml',
           notes: _notesController.text.isNotEmpty ? _notesController.text : null,
         );
-        Fluttertoast.showToast(msg: l10n.pumping + l10n.success);
+        Fluttertoast.showToast(msg: l10n.success, backgroundColor: Colors.green);
       }
       widget.onSaved();
     } catch (e) {
@@ -1419,6 +1437,10 @@ class _PumpingOptionsState extends State<PumpingOptions> {
               ),
             ),
             const SizedBox(height: 24),
+            _buildDateTimeField(context, l10n.startTime, _startTime, (dt) => setState(() => _startTime = dt)),
+            const SizedBox(height: 12),
+            _buildDateTimeField(context, l10n.endTime, _endTime, (dt) => setState(() => _endTime = dt)),
+            const SizedBox(height: 16),
             TextField(
               controller: _amountController,
               keyboardType: TextInputType.number,
@@ -1491,7 +1513,7 @@ class _NoteOptionsState extends State<NoteOptions> {
   Future<void> _save() async {
     final l10n = AppLocalizations.of(context)!;
     if (_noteController.text.isEmpty) {
-      Fluttertoast.showToast(msg: '${l10n.note}${l10n.error}');
+      Fluttertoast.showToast(msg: l10n.error, backgroundColor: Colors.red);
       return;
     }
     
@@ -1503,13 +1525,13 @@ class _NoteOptionsState extends State<NoteOptions> {
           'note': _noteController.text,
         };
         await ApiService.updateNote(widget.editItem!['id'], data);
-        Fluttertoast.showToast(msg: l10n.note + l10n.success);
+        Fluttertoast.showToast(msg: l10n.success, backgroundColor: Colors.green);
       } else {
         await ApiService.addNote(
           widget.childId,
           _noteController.text,
         );
-        Fluttertoast.showToast(msg: l10n.note + l10n.success);
+        Fluttertoast.showToast(msg: l10n.success, backgroundColor: Colors.green);
       }
       widget.onSaved();
     } catch (e) {
@@ -1654,7 +1676,7 @@ class _MeasurementOptionsState extends State<MeasurementOptions> {
       if (_editingModel == 'head circumference' && _headCircController.text.isNotEmpty) hasInput = true;
       if (_editingModel == 'temperature' && _tempController.text.isNotEmpty) hasInput = true;
       if (!hasInput) {
-        Fluttertoast.showToast(msg: l10n.weight + l10n.error);
+        Fluttertoast.showToast(msg: l10n.error, backgroundColor: Colors.red);
         return;
       }
     }
@@ -1709,7 +1731,7 @@ class _MeasurementOptionsState extends State<MeasurementOptions> {
           }
           await ApiService.updateTemperature(widget.editItem!['id'], data);
         }
-        Fluttertoast.showToast(msg: l10n.weight + l10n.success);
+        Fluttertoast.showToast(msg: l10n.success, backgroundColor: Colors.green);
       } else {
         final date = DateTimeUtils.formatDateOnly(DateTime.now());
         final time = DateTimeUtils.formatForApi(DateTime.now());
@@ -1754,7 +1776,7 @@ class _MeasurementOptionsState extends State<MeasurementOptions> {
           );
         }
         
-        Fluttertoast.showToast(msg: l10n.weight + l10n.success);
+        Fluttertoast.showToast(msg: l10n.success, backgroundColor: Colors.green);
       }
       widget.onSaved();
     } catch (e) {
@@ -1845,13 +1867,13 @@ class _MeasurementOptionsState extends State<MeasurementOptions> {
               const SizedBox(height: 16),
             if (_editingModel == null || _editingModel == 'temperature')
               TextField(
-                controller: _tempController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(
-                  labelText: '${l10n.temperature} (°C)',
-                  border: const OutlineInputBorder(),
-                ),
+              controller: _tempController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
+                labelText: '${l10n.temperature} (°C)',
+                border: const OutlineInputBorder(),
               ),
+            ),
             const SizedBox(height: 16),
             TextField(
               controller: _notesController,
@@ -1875,4 +1897,64 @@ class _MeasurementOptionsState extends State<MeasurementOptions> {
       ),
     );
   }
+}
+
+// ============== 通用时间选择器帮助方法 ==============
+
+/// 显示日期+时间选择器并回调用户选中的 DateTime
+Future<DateTime?> _pickDateTime(BuildContext context, DateTime initial) async {
+  final date = await showDatePicker(
+    context: context,
+    initialDate: initial,
+    firstDate: DateTime(2000),
+    lastDate: DateTime(2100),
+  );
+  if (date == null || !context.mounted) return null;
+  final time = await showTimePicker(
+    context: context,
+    initialTime: TimeOfDay.fromDateTime(initial),
+  );
+  if (time == null) return null;
+  return DateTime(date.year, date.month, date.day, time.hour, time.minute);
+}
+
+/// 通用的日期时间字段 UI（点击可修改）
+Widget _buildDateTimeField(
+  BuildContext context,
+  String label,
+  DateTime value,
+  ValueChanged<DateTime> onChanged,
+) {
+  final theme = Theme.of(context);
+  final formatted = DateFormat('yyyy-MM-dd HH:mm').format(value);
+  return InkWell(
+    borderRadius: BorderRadius.circular(8),
+    onTap: () async {
+      final picked = await _pickDateTime(context, value);
+      if (picked != null) onChanged(picked);
+    },
+    child: InputDecorator(
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        suffixIcon: const Icon(Icons.event, size: 20),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.access_time, size: 18, color: theme.colorScheme.primary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              formatted,
+              style: TextStyle(
+                fontSize: 15,
+                fontFamily: 'monospace',
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }

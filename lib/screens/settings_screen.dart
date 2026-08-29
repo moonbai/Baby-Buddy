@@ -24,14 +24,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _loadSettings();
   }
 
+  /// 并行加载所有设置，避免 3 次串行 await
   Future<void> _loadSettings() async {
-    final themeMode = await Storage.getThemeMode();
-    final quickReport = await Storage.getQuickReport();
-    final language = await Storage.getLanguage();
+    final results = await Future.wait([
+      Storage.getThemeMode(),
+      Storage.getQuickReport(),
+      Storage.getLanguage(),
+    ]);
+    if (!mounted) return;
     setState(() {
-      _themeMode = themeMode!;
-      _quickReport = quickReport!;
-      _language = language!;
+      _themeMode = results[0] as String;
+      _quickReport = results[1] as bool;
+      _language = results[2] as String;
       _isLoading = false;
     });
   }
@@ -39,6 +43,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _updateThemeMode(String mode) async {
     setState(() => _themeMode = mode);
     await Storage.saveThemeMode(mode);
+    // MyApp.updateThemeMode 现在是异步的：立即改 UI 状态并持久化
+    if (mounted) {
+      await MyApp.of(context)?.updateThemeMode(mode);
+    }
     widget.onThemeChanged?.call();
   }
 
@@ -50,7 +58,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _updateLanguage(String language) async {
     setState(() => _language = language);
     await Storage.saveLanguage(language);
-    MyApp.of(context)?.updateLanguage(language);
+    if (mounted) {
+      MyApp.of(context)?.updateLanguage(language);
+    }
   }
 
   @override
@@ -74,8 +84,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // ============== 主题 ==============
   Widget _buildThemeSection() {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -84,23 +96,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.palette,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+                Icon(Icons.palette, color: theme.colorScheme.primary),
                 const SizedBox(width: 12),
-                Text(
-                  l10n.themeSettings,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
+                Text(l10n.themeSettings, style: theme.textTheme.titleLarge),
               ],
             ),
             const SizedBox(height: 16),
             Text(
               l10n.chooseTheme,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 16),
             _buildThemeOption(
@@ -108,24 +114,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: l10n.followSystem,
               subtitle: l10n.followSystemSubtitle,
               value: 'system',
-              groupValue: _themeMode,
-              onChanged: _updateThemeMode,
             ),
             _buildThemeOption(
               icon: Icons.wb_sunny,
               title: l10n.lightMode,
               subtitle: l10n.lightModeSubtitle,
               value: 'light',
-              groupValue: _themeMode,
-              onChanged: _updateThemeMode,
             ),
             _buildThemeOption(
               icon: Icons.dark_mode,
               title: l10n.darkMode,
               subtitle: l10n.darkModeSubtitle,
               value: 'dark',
-              groupValue: _themeMode,
-              onChanged: _updateThemeMode,
             ),
           ],
         ),
@@ -133,8 +133,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // ============== 语言 ==============
   Widget _buildLanguageSection() {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -143,36 +145,79 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.language,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+                Icon(Icons.language, color: theme.colorScheme.primary),
                 const SizedBox(width: 12),
-                Text(
-                  l10n.languageSettings,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
+                Text(l10n.languageSettings, style: theme.textTheme.titleLarge),
               ],
             ),
             const SizedBox(height: 16),
             Text(
               l10n.chooseLanguage,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 16),
-            _buildLanguageOption(
-              title: l10n.chinese,
-              value: 'zh',
-              groupValue: _language,
-              onChanged: _updateLanguage,
+            _buildLanguageOption(title: l10n.chinese, value: 'zh'),
+            _buildLanguageOption(title: l10n.english, value: 'en'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ============== 功能开关 ==============
+  Widget _buildFeaturesSection() {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.settings, color: theme.colorScheme.primary),
+                const SizedBox(width: 12),
+                Text(l10n.featureSettings, style: theme.textTheme.titleLarge),
+              ],
             ),
-            _buildLanguageOption(
-              title: l10n.english,
-              value: 'en',
-              groupValue: _language,
-              onChanged: _updateLanguage,
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Icon(
+                  Icons.speed,
+                  color: _quickReport
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.quickReportMode,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        l10n.quickReportModeSubtitle,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch(value: _quickReport, onChanged: _toggleQuickReport),
+              ],
             ),
           ],
         ),
@@ -180,22 +225,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // ============== 通用组件 ==============
+
   Widget _buildLanguageOption({
     required String title,
     required String value,
-    required String groupValue,
-    required ValueChanged<String> onChanged,
   }) {
-    final isSelected = value == groupValue;
+    final theme = Theme.of(context);
+    final isSelected = value == _language;
     return InkWell(
-      onTap: () => onChanged(value),
+      onTap: () => _updateLanguage(value),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
             Icon(
               Icons.translate,
-              color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
+              color: isSelected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant,
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -204,14 +252,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface,
                 ),
               ),
             ),
             Radio<String>(
               value: value,
-              groupValue: groupValue,
-              onChanged: (v) => onChanged(v!),
+              groupValue: _language,
+              onChanged: (v) => _updateLanguage(v!),
             ),
           ],
         ),
@@ -224,19 +274,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required String title,
     required String subtitle,
     required String value,
-    required String groupValue,
-    required ValueChanged<String> onChanged,
   }) {
-    final isSelected = value == groupValue;
+    final theme = Theme.of(context);
+    final isSelected = value == _themeMode;
     return InkWell(
-      onTap: () => onChanged(value),
+      onTap: () => _updateThemeMode(value),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
             Icon(
               icon,
-              color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
+              color: isSelected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant,
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -248,7 +299,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                      color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
+                      color: isSelected
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -256,7 +309,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     subtitle,
                     style: TextStyle(
                       fontSize: 13,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -264,72 +317,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             Radio<String>(
               value: value,
-              groupValue: groupValue,
-              onChanged: (v) => onChanged(v!),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFeaturesSection() {
-    final l10n = AppLocalizations.of(context)!;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.settings,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  l10n.featureSettings,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Icon(
-                  Icons.speed,
-                  color: _quickReport ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.quickReportMode,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        l10n.quickReportModeSubtitle,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Switch(
-                  value: _quickReport,
-                  onChanged: _toggleQuickReport,
-                ),
-              ],
+              groupValue: _themeMode,
+              onChanged: (v) => _updateThemeMode(v!),
             ),
           ],
         ),

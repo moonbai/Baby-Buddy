@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -6,6 +7,7 @@ import 'package:babybuddy_app/screens/child_select.dart';
 import 'package:babybuddy_app/screens/quick_add.dart';
 import 'package:babybuddy_app/screens/about_screen.dart';
 import 'package:babybuddy_app/screens/settings_screen.dart';
+import 'package:babybuddy_app/screens/login_screen.dart';
 import 'package:babybuddy_app/utils/storage.dart';
 import 'package:babybuddy_app/utils/date_time_utils.dart';
 import 'package:babybuddy_app/utils/timer_manager.dart';
@@ -31,6 +33,13 @@ class _HomeScreenState extends State<HomeScreen> {
   List _timers = [];
   bool _quickReportEnabled = false;
 
+  /// 保存 StreamSubscription，防止内存泄漏
+  StreamSubscription<List<Map<String, dynamic>>>? _timersSubscription;
+
+  /// 便捷获取当前语言包（保证非空，出问题用英文兜底）
+  AppLocalizations get l10n =>
+      AppLocalizations.of(context) ?? _EnglishFallbackLocalizations();
+
   @override
   void initState() {
     super.initState();
@@ -39,10 +48,20 @@ class _HomeScreenState extends State<HomeScreen> {
     loadTimers();
   }
 
+  @override
+  void dispose() {
+    _timersSubscription?.cancel();
+    _timersSubscription = null;
+    super.dispose();
+  }
+
+  // ============== 初始化 ==============
+
   Future<void> loadSettings() async {
-    final quickReport = await Storage.getQuickReport();
+    final quickReport = await Storage.getQuickReport(); // 返回非空 bool
+    if (!mounted) return;
     setState(() {
-      _quickReportEnabled = quickReport!;
+      _quickReportEnabled = quickReport;
     });
   }
 
@@ -50,47 +69,64 @@ class _HomeScreenState extends State<HomeScreen> {
     final childId = await Storage.getChildId();
 
     if (childId == null) {
-      setState(() {
-        _hasSelectedChild = false;
-        _selectedChildName = null;
-        _selectedChildId = null;
-        timeline = [];
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _hasSelectedChild = false;
+          _selectedChildName = null;
+          _selectedChildId = null;
+          timeline = [];
+          _isLoading = false;
+        });
+      }
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-      _hasSelectedChild = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+        _hasSelectedChild = true;
+      });
+    }
 
     try {
-      final serverUrl = await Storage.getServerUrl();
-      final children = await ApiService.getChildren();
-      final selectedChild = children.firstWhere(
-        (c) => c['id'] == childId,
-        orElse: () => null,
+      final results = await Future.wait([
+        Storage.getServerUrl(),
+        ApiService.getChildren(),
+        ApiService.getTimeline(childId: childId),
+      ]);
+      final serverUrl = results[0] as String?;
+      final children = results[1] as List;
+      final data = results[2] as List;
+
+      final selectedChild = children.cast<Map<String, dynamic>>().firstWhere(
+            (c) => c['id'] == childId,
+        orElse: () => {},
       );
 
-      if (selectedChild != null) {
+      if (!mounted) return;
+
+      if (selectedChild.isNotEmpty) {
         setState(() {
-          _selectedChildName = '${selectedChild['first_name'] ?? ''} ${selectedChild['last_name'] ?? ''}'.trim();
+          _selectedChildName =
+          '${selectedChild['first_name'] ?? ''} ${selectedChild['last_name'] ?? ''}'
+              .trim();
           _selectedChildId = childId;
         });
       }
-
-      setState(() => _serverUrl = serverUrl);
-
-      final data = await ApiService.getTimeline(childId: childId);
-      setState(() => timeline = data);
-    } catch (e) {
       setState(() {
-        _errorMessage = e.toString();
+        _serverUrl = serverUrl;
+        timeline = data;
       });
+    } catch (e) {
       if (mounted) {
-        Fluttertoast.showToast(msg: '${AppLocalizations.of(context)?.loadTimelineFailed ?? '加载时间线失败'}: $e');
+        setState(() {
+          _errorMessage = e.toString();
+        });
+        Fluttertoast.showToast(
+          msg: '${l10n.loadTimelineFailed}: $e',
+          backgroundColor: Colors.red,
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -103,47 +139,62 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       await TimerManager().loadTimers(childId: childId);
-      TimerManager().timersStream.listen((timers) {
-        if (mounted) {
-          setState(() => _timers = timers);
-        }
-      });
+      // 先设置一次当前快照，避免首帧空
+      if (mounted) {
+        setState(() => _timers = TimerManager().timers);
+      }
+      // 先取消可能存在的旧订阅
+      await _timersSubscription?.cancel();
+      _timersSubscription =
+          TimerManager().timersStream.listen((timers) {
+            if (mounted) {
+              setState(() => _timers = timers);
+            }
+          });
     } catch (e) {
-      print('加载定时器失败: $e');
+      debugPrint('加载定时器失败: $e');
     }
   }
+
+  // ============== 功能操作 ==============
 
   Future<void> createTimer() async {
     if (_selectedChildId == null) {
-      Fluttertoast.showToast(msg: AppLocalizations.of(context)?.noChildSelected ?? '请先选择宝宝');
+      Fluttertoast.showToast(msg: l10n.noChildSelected);
       return;
     }
-
     try {
       await TimerManager().createTimer(childId: _selectedChildId);
-      if (mounted) {
-        Fluttertoast.showToast(msg: AppLocalizations.of(context)?.timerStarted ?? '定时器已启动');
-      }
+      if (mounted) Fluttertoast.showToast(msg: l10n.timerStarted);
     } catch (e) {
       if (mounted) {
-        Fluttertoast.showToast(msg: '${AppLocalizations.of(context)?.startTimerFailed ?? '启动定时器失败'}: $e');
+        Fluttertoast.showToast(
+          msg: '${l10n.startTimerFailed}: $e',
+          backgroundColor: Colors.red,
+        );
       }
     }
   }
 
-  void _openInBrowser() {
+  /// 复制宝宝详情页链接到剪贴板（原 _openInBrowser 名不副实）
+  void _copyBabyLink() {
     if (_serverUrl == null || _selectedChildId == null) {
-      Fluttertoast.showToast(msg: AppLocalizations.of(context)?.cannotOpenUrl ?? '无法打开网页，请先选择宝宝');
+      Fluttertoast.showToast(msg: l10n.cannotOpenUrl);
       return;
     }
     final url = '$_serverUrl/child/$_selectedChildId/';
     Clipboard.setData(ClipboardData(text: url));
-    Fluttertoast.showToast(msg: '${AppLocalizations.of(context)?.linkCopied ?? '链接已复制到剪贴板'}:\n$url');
+    Fluttertoast.showToast(msg: '${l10n.linkCopied}:\n$url');
   }
 
   Future<void> logout() async {
     await Storage.logout();
-    if (mounted) Navigator.pushReplacementNamed(context, '/login');
+    if (!mounted) return;
+    // 清空整个导航栈，返回登录页
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (_) => false,
+    );
   }
 
   Future<void> deleteRecord(dynamic item) async {
@@ -157,23 +208,21 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)?.confirmDelete ?? '确认删除'),
-        content: Text(AppLocalizations.of(context)?.confirmDeleteRecord ?? '确定要删除这条记录吗？'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(AppLocalizations.of(context)?.cancel ?? '取消'),
+      builder: (context) =>
+          AlertDialog(
+            title: Text(l10n.confirmDelete),
+            content: Text(l10n.confirmDeleteRecord),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(l10n.cancel),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(l10n.delete, style: const TextStyle(color: Colors.red)),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(
-              AppLocalizations.of(context)?.delete ?? '删除',
-              style: const TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
-      ),
     );
 
     if (confirmed != true) return;
@@ -212,113 +261,86 @@ class _HomeScreenState extends State<HomeScreen> {
           await ApiService.deleteTemperature(id);
           break;
         default:
-          Fluttertoast.showToast(msg: AppLocalizations.of(context)?.typeNotSupportedDelete ?? '该类型暂不支持删除');
+          Fluttertoast.showToast(msg: l10n.typeNotSupportedDelete);
           return;
       }
-      Fluttertoast.showToast(msg: AppLocalizations.of(context)?.deleteSuccess ?? '删除成功');
+      Fluttertoast.showToast(msg: l10n.deleteSuccess);
       await loadTimeline();
     } catch (e) {
       if (mounted) {
-        Fluttertoast.showToast(msg: '删除失败: $e', backgroundColor: Colors.red);
+        Fluttertoast.showToast(
+          msg: '删除失败: $e',
+          backgroundColor: Colors.red,
+          toastLength: Toast.LENGTH_LONG,
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
+  // ============== 记录显示辅助方法 ==============
+
   String _getRecordTitle(dynamic item) {
-    final l10n = AppLocalizations.of(context)!;
     final model = item['model']?.toString() ?? '';
     switch (model) {
-      case 'sleep':
-        return l10n.sleep;
-      case 'feeding':
-        return l10n.feeding;
-      case 'change':
-        return l10n.diaper;
-      case 'tummy time':
-        return l10n.tummyTime;
-      case 'pumping':
-        return l10n.pumping;
-      case 'note':
-        return l10n.note;
-      case 'weight':
-        return l10n.weight;
-      case 'height':
-        return l10n.height;
-      case 'head circumference':
-        return l10n.headCircumference;
-      case 'temperature':
-        return l10n.temperature;
-      default:
-        return model;
+      case 'sleep': return l10n.sleep;
+      case 'feeding': return l10n.feeding;
+      case 'change': return l10n.diaper;
+      case 'tummy time': return l10n.tummyTime;
+      case 'pumping': return l10n.pumping;
+      case 'note': return l10n.note;
+      case 'weight': return l10n.weight;
+      case 'height': return l10n.height;
+      case 'head circumference': return l10n.headCircumference;
+      case 'temperature': return l10n.temperature;
+      default: return model;
     }
   }
 
   IconData _getRecordIcon(dynamic item) {
-    final model = item['model']?.toString() ?? '';
-    switch (model) {
-      case 'sleep':
-        return Icons.bedtime;
-      case 'feeding':
-        return Icons.restaurant;
-      case 'change':
-        return Icons.baby_changing_station;
-      case 'tummy time':
-        return Icons.self_improvement;
-      case 'pumping':
-        return Icons.water_drop;
-      case 'note':
-        return Icons.note;
+    switch (item['model']?.toString() ?? '') {
+      case 'sleep': return Icons.bedtime;
+      case 'feeding': return Icons.restaurant;
+      case 'change': return Icons.baby_changing_station;
+      case 'tummy time': return Icons.self_improvement;
+      case 'pumping': return Icons.water_drop;
+      case 'note': return Icons.note;
       case 'weight':
       case 'height':
       case 'head circumference':
         return Icons.monitor_weight;
-      case 'temperature':
-        return Icons.thermostat;
-      default:
-        return Icons.event;
+      case 'temperature': return Icons.thermostat;
+      default: return Icons.event;
     }
   }
 
   Color _getRecordColor(dynamic item) {
-    final model = item['model']?.toString() ?? '';
-    switch (model) {
-      case 'sleep':
-        return Colors.blue;
-      case 'feeding':
-        return Colors.orange;
-      case 'change':
-        return Colors.yellow[700]!;
-      case 'tummy time':
-        return Colors.green;
-      case 'pumping':
-        return Colors.purple;
-      case 'note':
-        return Colors.teal;
+    switch (item['model']?.toString() ?? '') {
+      case 'sleep': return Colors.blue;
+      case 'feeding': return Colors.orange;
+      case 'change': return Colors.yellow[700]!;
+      case 'tummy time': return Colors.green;
+      case 'pumping': return Colors.purple;
+      case 'note': return Colors.teal;
       case 'weight':
       case 'height':
       case 'head circumference':
         return Colors.deepPurple;
-      case 'temperature':
-        return Colors.red;
-      default:
-        return Colors.grey;
+      case 'temperature': return Colors.red;
+      default: return Colors.grey;
     }
   }
 
-  String _formatTime(String timeStr) {
-    return DateTimeUtils.formatDisplayTime(timeStr);
-  }
+  String _formatTime(String timeStr) => DateTimeUtils.formatDisplayTime(timeStr);
 
   String _getRecordBrief(dynamic item) {
-    final l10n = AppLocalizations.of(context)!;
     final model = item['model']?.toString() ?? '';
     switch (model) {
       case 'sleep':
         final nap = item['nap'] == true;
         final duration = item['duration'];
-        return '${nap ? l10n.nap : l10n.sleeping} ${duration != null ? "($duration)" : ""}';
+        return '${nap ? l10n.nap : l10n.sleeping}${duration != null ? " ($duration)" : ""}';
       case 'feeding':
         final method = item['method'];
         final type = item['type'];
@@ -347,7 +369,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _getRecordDetail(dynamic item) {
-    final l10n = AppLocalizations.of(context)!;
     final model = item['model']?.toString() ?? '';
     final buffer = StringBuffer();
 
@@ -440,88 +461,84 @@ class _HomeScreenState extends State<HomeScreen> {
         if (time != null) buffer.writeln('${l10n.time}: ${_formatTime(time)}');
         break;
     }
-
     return buffer.toString().trim();
   }
 
   String _getFeedingTypeName(String type) {
-    final l10n = AppLocalizations.of(context)!;
-    final types = {
-      'breast milk': l10n.breastMilk,
-      'formula': l10n.formula,
-      'fortified breast milk': l10n.fortifiedBreastMilk,
-      'pumped milk': l10n.pumpedMilk,
+    const types = {
+      'breast milk': 'breastMilk',
+      'formula': 'formula',
+      'fortified breast milk': 'fortifiedBreastMilk',
+      'pumped milk': 'pumpedMilk',
     };
-    return types[type] ?? type;
+    final key = types[type];
+    if (key == null) return type;
+    return _lookupL10n(key) ?? type;
   }
 
   String _getFeedingMethodName(String method) {
-    final l10n = AppLocalizations.of(context)!;
-    final methods = {
-      'left breast': l10n.leftBreast,
-      'right breast': l10n.rightBreast,
-      'both breasts': l10n.bothBreasts,
-      'bottle': l10n.bottle,
-      'spoon': l10n.spoon,
+    const methods = {
+      'left breast': 'leftBreast',
+      'right breast': 'rightBreast',
+      'both breasts': 'bothBreasts',
+      'bottle': 'bottle',
+      'spoon': 'spoon',
     };
-    return methods[method] ?? method;
+    final key = methods[method];
+    if (key == null) return method;
+    return _lookupL10n(key) ?? method;
   }
 
   String _getDiaperColorName(String color) {
-    final l10n = AppLocalizations.of(context)!;
-    final colors = {
-      'unknown': l10n.unknown,
-      'yellow': l10n.yellow,
-      'brown': l10n.brown,
-      'green': l10n.green,
-      'other': l10n.other,
+    const colors = {
+      'unknown': 'unknown',
+      'yellow': 'yellow',
+      'brown': 'brown',
+      'green': 'green',
+      'other': 'other',
     };
-    return colors[color] ?? color;
+    final key = colors[color];
+    if (key == null) return color;
+    return _lookupL10n(key) ?? color;
   }
+
+  /// 按属性名动态查找当前 l10n 的字段（简化 switch 重复代码）
+  String? _lookupL10n(String name) {
+    final AppLocalizations local = l10n;
+    switch (name) {
+      // -------- Feeding type --------
+      case 'breastMilk': return local.breastMilk;
+      case 'formula': return local.formula;
+      case 'fortifiedBreastMilk': return local.fortifiedBreastMilk;
+      case 'pumpedMilk': return local.pumpedMilk;
+      // -------- Feeding method --------
+      case 'leftBreast': return local.leftBreast;
+      case 'rightBreast': return local.rightBreast;
+      case 'bothBreasts': return local.bothBreasts;
+      case 'bottle': return local.bottle;
+      case 'spoon': return local.spoon;
+      // -------- Diaper color --------
+      case 'unknown': return local.unknown;
+      case 'yellow': return local.yellow;
+      case 'brown': return local.brown;
+      case 'green': return local.green;
+      case 'other': return local.other;
+      default: return null;
+    }
+  }
+
+  // ============== 主界面 ==============
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.appTitle),
         actions: [
           PopupMenuButton<String>(
-            onSelected: (value) async {
-              switch (value) {
-                case 'select_child':
-                  await Navigator.push(context, MaterialPageRoute(builder: (_) => const ChildSelect()));
-                  loadTimeline();
-                  break;
-                case 'settings':
-                  final appState = MyApp.of(context);
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => SettingsScreen(
-                        onThemeChanged: () async {
-                          final mode = await Storage.getThemeMode();
-                          if (mounted && mode != null) {
-                            appState?.updateThemeMode(mode);
-                          }
-                        },
-                      ),
-                    ),
-                  );
-                  loadSettings();
-                  break;
-                case 'about':
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const AboutScreen()),
-                  );
-                  break;
-                case 'logout':
-                  logout();
-                  break;
-              }
-            },
-            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+            onSelected: _onMenuSelected,
+            itemBuilder: (BuildContext context) =>
+            <PopupMenuEntry<String>>[
               PopupMenuItem<String>(
                 value: 'select_child',
                 child: ListTile(
@@ -536,7 +553,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: Text(l10n.settings),
                 ),
               ),
-              PopupMenuItem<String>(value: 'about', child: ListTile(leading: const Icon(Icons.info), title: Text(l10n.about))),
+              PopupMenuItem<String>(
+                value: 'about',
+                child: ListTile(leading: const Icon(Icons.info), title: Text(l10n.about)),
+              ),
               const PopupMenuDivider(),
               PopupMenuItem<String>(
                 value: 'logout',
@@ -551,15 +571,15 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: _hasSelectedChild
           ? FloatingActionButton(
-              onPressed: () {
-                if (_quickReportEnabled) {
-                  _showQuickReportOptions();
-                } else {
-                  _showAddMenu();
-                }
-              },
-              child: const Icon(Icons.add),
-            )
+        onPressed: () {
+          if (_quickReportEnabled) {
+            _showQuickReportOptions();
+          } else {
+            _showAddMenu();
+          }
+        },
+        child: const Icon(Icons.add),
+      )
           : null,
       body: RefreshIndicator(
         onRefresh: loadTimeline,
@@ -568,8 +588,47 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> _onMenuSelected(String value) async {
+    switch (value) {
+      case 'select_child':
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ChildSelect()),
+        );
+        loadTimeline();
+        loadTimers();
+        break;
+      case 'settings':
+        final appState = MyApp.of(context);
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                SettingsScreen(
+                  onThemeChanged: () async {
+                    final mode = await Storage.getThemeMode();
+                    if (mounted) {
+                      appState?.updateThemeMode(mode);
+                    }
+                  },
+                ),
+          ),
+        );
+        loadSettings();
+        break;
+      case 'about':
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AboutScreen()),
+        );
+        break;
+      case 'logout':
+        logout();
+        break;
+    }
+  }
+
   Widget _buildBody() {
-    final l10n = AppLocalizations.of(context)!;
     if (!_hasSelectedChild) {
       return Center(
         child: Column(
@@ -589,7 +648,10 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: () async {
-                await Navigator.push(context, MaterialPageRoute(builder: (_) => const ChildSelect()));
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ChildSelect()),
+                );
                 loadTimeline();
               },
               icon: const Icon(Icons.person),
@@ -624,79 +686,85 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Column(
       children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Theme.of(context).primaryColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    child: Text(
-                      _selectedChildName != null && _selectedChildName!.isNotEmpty
-                          ? _selectedChildName![0].toUpperCase()
-                          : '?',
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.currentBaby,
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                        Text(
-                          _selectedChildName ?? l10n.notSelected,
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.open_in_new),
-                    tooltip: l10n.clickCopyLink,
-                    onPressed: _openInBrowser,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onLongPress: _openInBrowser,
-                child: Text(
-                  l10n.longPressCopyLink,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                ),
-              ),
-            ],
-          ),
-        ),
+        _buildBabyInfoCard(),
         if (_timers.isNotEmpty) ..._buildTimersList(),
         Expanded(child: _buildTimelineList()),
       ],
     );
   }
 
+  Widget _buildBabyInfoCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).primaryColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: Theme.of(context).primaryColor,
+                child: Text(
+                  _selectedChildName != null && _selectedChildName!.isNotEmpty
+                      ? _selectedChildName![0].toUpperCase()
+                      : '?',
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.currentBaby,
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                    Text(
+                      _selectedChildName ?? l10n.notSelected,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.open_in_new),
+                tooltip: l10n.clickCopyLink,
+                onPressed: _copyBabyLink,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          GestureDetector(
+            onLongPress: _copyBabyLink,
+            child: Text(
+              l10n.longPressCopyLink,
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   List<Widget> _buildTimersList() {
-    return _timers.map((timer) => TimerCard(
+    return _timers
+        .map((timer) =>
+        TimerCard(
           timer: timer,
           selectedChildId: _selectedChildId,
           onTimerStopped: () => loadTimeline(),
           onTimerUsed: () => loadTimeline(),
-        )).toList();
+        ))
+        .toList();
   }
 
   Widget _buildTimelineList() {
-    final l10n = AppLocalizations.of(context)!;
     if (timeline.isEmpty) {
       return Center(
         child: Column(
@@ -721,22 +789,18 @@ class _HomeScreenState extends State<HomeScreen> {
     return ListView.builder(
       itemCount: timeline.length,
       padding: const EdgeInsets.only(bottom: 80),
-      itemBuilder: (c, i) {
-        final item = timeline[i];
-        return _buildRecordCard(item);
-      },
+      itemBuilder: (c, i) => _buildRecordCard(timeline[i]),
     );
   }
 
   Widget _buildRecordCard(dynamic item) {
-    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
     final color = _getRecordColor(item);
     final icon = _getRecordIcon(item);
     final title = _getRecordTitle(item);
     final brief = _getRecordBrief(item);
     final timeStr = item['time'] ?? item['start'] ?? item['date'] ?? '';
-    final time = _formatTime(timeStr);
-    final theme = Theme.of(context);
+    final time = _formatTime(timeStr.toString());
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -750,8 +814,17 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (brief.isNotEmpty)
-              Text(brief, style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 13)),
-            Text(time, style: TextStyle(color: theme.colorScheme.outline, fontSize: 12)),
+              Text(
+                brief,
+                style: TextStyle(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontSize: 13,
+                ),
+              ),
+            Text(
+              time,
+              style: TextStyle(color: theme.colorScheme.outline, fontSize: 12),
+            ),
           ],
         ),
         children: [
@@ -770,10 +843,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     TextButton.icon(
                       onPressed: () async {
                         final childId = await Storage.getChildId();
-                        if (childId != null) {
+                        if (childId != null && mounted) {
                           await Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => QuickAdd(editItem: item, childId: childId)),
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  QuickAdd(editItem: item, childId: childId),
+                            ),
                           );
                           loadTimeline();
                         }
@@ -797,156 +873,135 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // ============== 新增记录菜单 ==============
+
   void _showAddMenu() {
-    final l10n = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.timer),
-              title: Text(l10n.startTimer),
-              onTap: () async {
-                Navigator.pop(context);
-                await createTimer();
-              },
+      builder: (context) =>
+          SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.timer),
+                  title: Text(l10n.startTimer),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await createTimer();
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.add_circle_outline),
+                  title: Text(l10n.addRecord),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const QuickAdd()),
+                    );
+                    loadTimeline();
+                  },
+                ),
+              ],
             ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.add_circle_outline),
-              title: Text(l10n.addRecord),
-              onTap: () async {
-                Navigator.pop(context);
-                await Navigator.push(context, MaterialPageRoute(builder: (_) => const QuickAdd()));
-                loadTimeline();
-              },
-            ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
   void _showQuickReportOptions() {
-    final l10n = AppLocalizations.of(context)!;
     final childId = _selectedChildId;
     if (childId == null) return;
 
     showModalBottomSheet(
       context: context,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(l10n.quickReport, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+      builder: (context) =>
+          SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    l10n.quickReport,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const Divider(),
+                Expanded(
+                  child: GridView.count(
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.all(8),
+                    children: [
+                      _QuickReportButton(
+                        icon: Icons.restaurant,
+                        label: l10n.feeding,
+                        color: Colors.orange,
+                        onTap: () => _navigateQuickAdd('feeding', childId),
+                      ),
+                      _QuickReportButton(
+                        icon: Icons.bedtime,
+                        label: l10n.sleep,
+                        color: Colors.blue,
+                        onTap: () => _navigateQuickAdd('sleep', childId),
+                      ),
+                      _QuickReportButton(
+                        icon: Icons.baby_changing_station,
+                        label: l10n.diaper,
+                        color: Colors.amber,
+                        onTap: () => _navigateQuickAdd('change', childId),
+                      ),
+                      _QuickReportButton(
+                        icon: Icons.self_improvement,
+                        label: l10n.tummyTime,
+                        color: Colors.green,
+                        onTap: () => _navigateQuickAdd('tummy_time', childId),
+                      ),
+                      _QuickReportButton(
+                        icon: Icons.water_drop,
+                        label: l10n.pumping,
+                        color: Colors.purple,
+                        onTap: () => _navigateQuickAdd('pumping', childId),
+                      ),
+                      _QuickReportButton(
+                        icon: Icons.edit_note,
+                        label: l10n.note,
+                        color: Colors.teal,
+                        onTap: () => _navigateQuickAdd('note', childId),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(),
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _showAddMenu();
+                  },
+                  icon: const Icon(Icons.more_horiz),
+                  label: Text(l10n.moreOptions),
+                ),
+              ],
             ),
-            const Divider(),
-            Expanded(
-              child: GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                padding: const EdgeInsets.all(8),
-                children: [
-                  _QuickReportButton(
-                    icon: Icons.restaurant,
-                    label: l10n.feeding,
-                    color: Colors.orange,
-                    onTap: () async {
-                      Navigator.pop(context);
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => QuickAdd(initialType: 'feeding', childId: childId)),
-                      );
-                      loadTimeline();
-                    },
-                  ),
-                  _QuickReportButton(
-                    icon: Icons.bedtime,
-                    label: l10n.sleep,
-                    color: Colors.blue,
-                    onTap: () async {
-                      Navigator.pop(context);
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => QuickAdd(initialType: 'sleep', childId: childId)),
-                      );
-                      loadTimeline();
-                    },
-                  ),
-                  _QuickReportButton(
-                    icon: Icons.baby_changing_station,
-                    label: l10n.diaper,
-                    color: Colors.amber,
-                    onTap: () async {
-                      Navigator.pop(context);
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => QuickAdd(initialType: 'change', childId: childId)),
-                      );
-                      loadTimeline();
-                    },
-                  ),
-                  _QuickReportButton(
-                    icon: Icons.self_improvement,
-                    label: l10n.tummyTime,
-                    color: Colors.green,
-                    onTap: () async {
-                      Navigator.pop(context);
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => QuickAdd(initialType: 'tummy_time', childId: childId)),
-                      );
-                      loadTimeline();
-                    },
-                  ),
-                  _QuickReportButton(
-                    icon: Icons.water_drop,
-                    label: l10n.pumping,
-                    color: Colors.purple,
-                    onTap: () async {
-                      Navigator.pop(context);
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => QuickAdd(initialType: 'pumping', childId: childId)),
-                      );
-                      loadTimeline();
-                    },
-                  ),
-                  _QuickReportButton(
-                    icon: Icons.edit_note,
-                    label: l10n.note,
-                    color: Colors.teal,
-                    onTap: () async {
-                      Navigator.pop(context);
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => QuickAdd(initialType: 'note', childId: childId)),
-                      );
-                      loadTimeline();
-                    },
-                  ),
-                ],
-              ),
-            ),
-            const Divider(),
-            TextButton.icon(
-              onPressed: () {
-                Navigator.pop(context);
-                _showAddMenu();
-              },
-              icon: const Icon(Icons.more_horiz),
-              label: Text(l10n.moreOptions),
-            ),
-          ],
-        ),
-      ),
+          ),
     );
   }
+
+  Future<void> _navigateQuickAdd(String type, int childId) async {
+    Navigator.pop(context);
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => QuickAdd(initialType: type, childId: childId),
+      ),
+    );
+    loadTimeline();
+  }
 }
+
+// ============== 子组件 ==============
 
 class _QuickReportButton extends StatelessWidget {
   final IconData icon;
@@ -980,4 +1035,87 @@ class _QuickReportButton extends StatelessWidget {
       ),
     );
   }
+}
+
+// ============== 兜底 l10n（极少数情况下系统还没加载好本地化才会使用） ==============
+
+class _EnglishFallbackLocalizations implements AppLocalizations {
+  @override String get appTitle => 'Baby Buddy';
+  @override String get sleep => 'Sleep';
+  @override String get feeding => 'Feeding';
+  @override String get diaper => 'Diaper';
+  @override String get tummyTime => 'Tummy Time';
+  @override String get pumping => 'Pumping';
+  @override String get note => 'Note';
+  @override String get weight => 'Weight';
+  @override String get height => 'Height';
+  @override String get headCircumference => 'Head Circumference';
+  @override String get temperature => 'Temperature';
+  @override String get noChildSelected => 'No child selected';
+  @override String get clickMenuSelectChild => 'Click the menu to select a child';
+  @override String get selectChild => 'Select Child';
+  @override String get settings => 'Settings';
+  @override String get about => 'About';
+  @override String get logout => 'Logout';
+  @override String get startTimer => 'Start Timer';
+  @override String get addRecord => 'Add Record';
+  @override String get quickReport => 'Quick Report';
+  @override String get moreOptions => 'More Options';
+  @override String get timerStarted => 'Timer started';
+  @override String get startTimerFailed => 'Failed to start timer';
+  @override String get cannotOpenUrl => 'Cannot copy link, please select a child first';
+  @override String get linkCopied => 'Link copied to clipboard';
+  @override String get loadFailed => 'Failed to load';
+  @override String get reload => 'Reload';
+  @override String get noRecords => 'No records yet';
+  @override String get clickAddRecord => 'Click + to add a record';
+  @override String get confirmDelete => 'Confirm Delete';
+  @override String get confirmDeleteRecord => 'Are you sure you want to delete this record?';
+  @override String get cancel => 'Cancel';
+  @override String get delete => 'Delete';
+  @override String get deleteSuccess => 'Deleted successfully';
+  @override String get typeNotSupportedDelete => 'This type does not support deletion';
+  @override String get edit => 'Edit';
+  @override String get currentBaby => 'Current Baby';
+  @override String get notSelected => 'Not Selected';
+  @override String get clickCopyLink => 'Click to copy link';
+  @override String get longPressCopyLink => 'Long press or icon to copy link';
+  @override String get loadTimelineFailed => 'Failed to load timeline';
+  @override String get nap => 'Nap';
+  @override String get sleeping => 'Sleeping';
+  @override String get duration => 'Duration';
+  @override String get startTime => 'Start';
+  @override String get endTime => 'End';
+  @override String get notes => 'Notes';
+  @override String get type => 'Type';
+  @override String get milkType => 'Milk Type';
+  @override String get feedingMethod => 'Feeding Method';
+  @override String get amount => 'Amount';
+  @override String get time => 'Time';
+  @override String get color => 'Color';
+  @override String get wet => 'Wet';
+  @override String get solid => 'Solid';
+  @override String get unknown => 'Unknown';
+  @override String get content => 'Content';
+  @override String get milestone => 'Milestone';
+  @override String get weightKg => 'Weight';
+  @override String get date => 'Date';
+  @override String get heightCm => 'Height';
+  @override String get headCircumferenceCm => 'Head Circumference';
+  @override String get temperatureC => 'Temperature';
+  @override String get breastMilk => 'Breast Milk';
+  @override String get formula => 'Formula';
+  @override String get fortifiedBreastMilk => 'Fortified Breast Milk';
+  @override String get pumpedMilk => 'Pumped Milk';
+  @override String get leftBreast => 'Left Breast';
+  @override String get rightBreast => 'Right Breast';
+  @override String get bothBreasts => 'Both Breasts';
+  @override String get bottle => 'Bottle';
+  @override String get spoon => 'Spoon';
+  @override String get yellow => 'Yellow';
+  @override String get brown => 'Brown';
+  @override String get green => 'Green';
+  @override String get other => 'Other';
+
+  @override dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
