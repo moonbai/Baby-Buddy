@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:babybuddy_app/api/api_service.dart';
 import 'package:babybuddy_app/screens/child_select.dart';
 import 'package:babybuddy_app/screens/quick_add.dart';
@@ -34,6 +35,17 @@ class _HomeScreenState extends State<HomeScreen> {
   List _timers = [];
   bool _quickReportEnabled = false;
 
+  // ==================== 新增功能（参考官方原版 Android App）====================
+  // 子页左右滑动切换
+  final PageController _pageController = PageController(viewportFraction: 1);
+  int _pageIndex = 0;
+  List _allChildren = [];
+
+  // 尿布一键速记栏
+  bool _diaperWet = false;
+  bool _diaperSolid = false;
+  bool _savingDiaper = false;
+
   /// 保存 StreamSubscription，防止内存泄漏
   StreamSubscription<List<Map<String, dynamic>>>? _timersSubscription;
 
@@ -53,6 +65,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _timersSubscription?.cancel();
     _timersSubscription = null;
+    if (mounted) {
+      try { _pageController.dispose(); } catch (_) {}
+    }
     super.dispose();
   }
 
@@ -118,7 +133,10 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _serverUrl = serverUrl;
         timeline = data;
+        _allChildren = children;
       });
+      // 同步 PageView 到当前选中 child 的 index
+      _syncPageToSelected(childId, children);
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -186,6 +204,228 @@ class _HomeScreenState extends State<HomeScreen> {
     final url = '$_serverUrl/child/$_selectedChildId/';
     Clipboard.setData(ClipboardData(text: url));
     Fluttertoast.showToast(msg: '${l10n.linkCopied}:\n$url');
+  }
+
+  // ==================== PageView（左右滑动切换多宝宝）====================
+
+  void _syncPageToSelected(int childId, List children) {
+    if (children.isEmpty) return;
+    int idx = 0;
+    for (int i = 0; i < children.length; i++) {
+      final c = children[i];
+      if (c is Map && c['id'] == childId) { idx = i; break; }
+    }
+    _pageIndex = idx;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_pageController.hasClients) return;
+      if (_pageController.page?.round() != idx) {
+        _pageController.animateToPage(
+          idx,
+          duration: const Duration(milliseconds: 260),
+          curve: Curves.easeOutCubic,
+        );
+      }
+    });
+  }
+
+  Future<void> _switchToChildByIndex(int idx) async {
+    final list = _allChildren;
+    if (idx < 0 || idx >= list.length) return;
+    final c = list[idx];
+    if (c is! Map) return;
+    final id = c['id'];
+    if (id is! int) return;
+    if (id == _selectedChildId) return;
+    setState(() => _pageIndex = idx);
+    await Storage.saveChildId(id);
+    // 切换后触发重新拉 timeline + timers
+    await loadTimeline();
+    await loadTimers();
+    // 切换宝宝清空尿布速记状态
+    setState(() { _diaperWet = false; _diaperSolid = false; });
+  }
+
+  // ==================== 尿布一键速记栏（参考原版 App 的两键速记）====================
+
+  Widget _buildQuickDiaperBar() {
+    if (!_hasSelectedChild) return const SizedBox.shrink();
+    final scheme = Theme.of(context).colorScheme;
+    final wetSelected = _diaperWet;
+    final solidSelected = _diaperSolid;
+    final hasAny = wetSelected || solidSelected;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      height: hasAny ? 132 : 88,
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _DiaperQuickButton(
+                  icon: Icons.water_drop_outlined,
+                  activeIcon: Icons.water_drop,
+                  label: l10n.wet,
+                  selected: wetSelected,
+                  activeColor: scheme.tertiary,
+                  onTap: () => setState(() => _diaperWet = !_diaperWet),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _DiaperQuickButton(
+                  icon: Icons.breakfast_dining_outlined,
+                  activeIcon: Icons.breakfast_dining,
+                  label: l10n.solid,
+                  selected: solidSelected,
+                  activeColor: Colors.brown,
+                  onTap: () => setState(() => _diaperSolid = !_diaperSolid),
+                ),
+              ),
+            ],
+          ),
+          if (hasAny) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => setState(() { _diaperWet = false; _diaperSolid = false; }),
+                    child: Text(l10n.cancel),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 2,
+                  child: FilledButton.icon(
+                    onPressed: _savingDiaper ? null : _saveQuickDiaper,
+                    icon: _savingDiaper
+                        ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(Icons.check_circle_outline),
+                    label: Text(_savingDiaper ? '…' : '${l10n.diaper} ✓'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Future<void> _saveQuickDiaper() async {
+    final childId = _selectedChildId;
+    if (childId == null || (!_diaperWet && !_diaperSolid)) return;
+    setState(() => _savingDiaper = true);
+    try {
+      final now = DateTime.now();
+      final time = DateTimeUtils.formatForApi(now);
+      // 默认颜色：只 Wet → 未知；有 Solid → Other（用户可之后编辑）
+      String color = '';
+      if (_diaperSolid) {
+        color = _getDiaperColorKey(l10n.other) ?? 'other';
+      } else {
+        color = _getDiaperColorKey(l10n.unknown) ?? 'unknown';
+      }
+      await ApiService.addDiaper(childId, time, _diaperWet, _diaperSolid, color);
+      if (mounted) {
+        Fluttertoast.showToast(
+          msg: '${l10n.diaper} ✓',
+          backgroundColor: Colors.green,
+        );
+        setState(() { _diaperWet = false; _diaperSolid = false; });
+        await loadTimeline();
+      }
+    } catch (e) {
+      Fluttertoast.showToast(msg: '保存失败: $e', backgroundColor: Colors.red);
+    } finally {
+      if (mounted) setState(() => _savingDiaper = false);
+    }
+  }
+
+  String? _getDiaperColorKey(String label) {
+    if (label == l10n.yellow) return 'yellow';
+    if (label == l10n.brown) return 'brown';
+    if (label == l10n.green) return 'green';
+    if (label == l10n.unknown) return 'unknown';
+    if (label == l10n.other) return 'other';
+    return null;
+  }
+
+  // ==================== 重建默认定时器 ====================
+
+  Future<void> _recreateDefaultTimersAction() async {
+    final childId = _selectedChildId;
+    final name = _selectedChildName ?? '';
+    if (childId == null) {
+      Fluttertoast.showToast(msg: l10n.noChildSelected);
+      return;
+    }
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        icon: const Icon(Icons.restart_alt_outlined),
+        title: const Text('重建默认定时器'),
+        content: Text(
+          name.isEmpty
+              ? '将清除当前所有计时器并重新创建 Feeding / Sleep / Tummy Time 三个默认计时器。是否继续？'
+              : '将清除 $name 的所有计时器并重新创建 Feeding / Sleep / Tummy Time 三个默认计时器（与 Baby Buddy 官方原版 Android App 相同行为）。是否继续？',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.cancel)),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('重建')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+
+    Fluttertoast.showToast(msg: '正在重建…');
+    try {
+      await ApiService.recreateDefaultTimers(childId);
+      await loadTimers();
+      if (mounted) Fluttertoast.showToast(msg: '默认定时器已重建', backgroundColor: Colors.green);
+    } catch (e) {
+      Fluttertoast.showToast(msg: '重建失败: $e', backgroundColor: Colors.red, toastLength: Toast.LENGTH_LONG);
+    }
+  }
+
+  // ==================== 长按 Timeline 记录 → 打开服务器网页 ====================
+
+  Future<void> _openRecordInBrowser(dynamic item) async {
+    if (_serverUrl == null || _serverUrl!.isEmpty) return;
+    final id = item['id'];
+    if (id == null) return;
+    final model = item['model']?.toString() ?? '';
+    final path = _recordPathFragment(model);
+    if (path == null) {
+      Fluttertoast.showToast(msg: '该类型暂不支持在网页打开');
+      return;
+    }
+    final url = '$_serverUrl/$path/$id/change/';
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      Fluttertoast.showToast(msg: '无法打开浏览器: $e', backgroundColor: Colors.red);
+    }
+  }
+
+  String? _recordPathFragment(String model) {
+    switch (model) {
+      case 'sleep': return 'sleep';
+      case 'feeding': return 'feeding';
+      case 'change': return 'change';
+      case 'tummy time': return 'tummy-time';
+      case 'pumping': return 'pumping';
+      case 'note': return 'notes';
+      case 'weight': return 'weight';
+      case 'height': return 'height';
+      case 'head circumference': return 'head-circumference';
+      case 'temperature': return 'temperature';
+      default: return null;
+    }
   }
 
   Future<void> logout() async {
@@ -548,6 +788,23 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               PopupMenuItem<String>(
+                value: 'recreate_default_timers',
+                enabled: _hasSelectedChild,
+                child: ListTile(
+                  leading: const Icon(Icons.restart_alt_outlined),
+                  title: const Text('重建默认定时器'),
+                  subtitle: const Text('Feeding / Sleep / Tummy Time'),
+                ),
+              ),
+              PopupMenuItem<String>(
+                value: 'copy_baby_link',
+                enabled: _hasSelectedChild,
+                child: ListTile(
+                  leading: const Icon(Icons.link),
+                  title: const Text('复制宝宝链接'),
+                ),
+              ),
+              PopupMenuItem<String>(
                 value: 'settings',
                 child: ListTile(
                   leading: const Icon(Icons.settings),
@@ -598,6 +855,12 @@ class _HomeScreenState extends State<HomeScreen> {
         );
         loadTimeline();
         loadTimers();
+        break;
+      case 'recreate_default_timers':
+        await _recreateDefaultTimersAction();
+        break;
+      case 'copy_baby_link':
+        _copyBabyLink();
         break;
       case 'settings':
         final appState = MyApp.of(context);
@@ -687,10 +950,50 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Column(
       children: [
-        _buildBabyInfoCard(),
-        if (_timers.isNotEmpty) ..._buildTimersList(),
-        Expanded(child: _buildTimelineList()),
+        _buildQuickDiaperBar(),
+        Expanded(
+          child: PageView.builder(
+            controller: _pageController,
+            physics: (_allChildren.length > 1) ? const PageScrollPhysics() : const NeverScrollableScrollPhysics(),
+            onPageChanged: _switchToChildByIndex,
+            itemCount: _allChildren.isEmpty ? 1 : _allChildren.length,
+            itemBuilder: (ctx, idx) => Column(
+              key: ValueKey('child-page-$idx-${_allChildren.isNotEmpty ? _allChildren[idx]['id'] ?? idx : idx}'),
+              children: [
+                _buildBabyInfoCard(),
+                if (_timers.isNotEmpty) ..._buildTimersList(),
+                Expanded(child: _buildTimelineList()),
+              ],
+            ),
+          ),
+        ),
+        _buildPageIndicator(),
       ],
+    );
+  }
+
+  Widget _buildPageIndicator() {
+    final count = _allChildren.isEmpty ? 0 : _allChildren.length;
+    if (count <= 1) return const SizedBox(height: 10);
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(count, (i) {
+          final active = i == _pageIndex;
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            margin: const EdgeInsets.symmetric(horizontal: 3),
+            width: active ? 22 : 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: active ? scheme.primary : scheme.outlineVariant,
+              borderRadius: BorderRadius.circular(8),
+            ),
+          );
+        }),
+      ),
     );
   }
 
@@ -805,7 +1108,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: ExpansionTile(
+      child: InkWell(
+        onLongPress: () => _openRecordInBrowser(item),
+        borderRadius: Theme.of(context).cardTheme.shape is RoundedRectangleBorder
+            ? (Theme.of(context).cardTheme.shape as RoundedRectangleBorder).borderRadius
+            : BorderRadius.circular(12),
+        child: ExpansionTile(
         leading: CircleAvatar(
           backgroundColor: color.withOpacity(0.2),
           child: Icon(icon, color: color, size: 20),
@@ -870,7 +1178,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ],
-      ),
+          ),
+        ),  // ExpansionTile
+      ),   // InkWell
     );
   }
 
@@ -1030,6 +1340,70 @@ class _QuickReportButton extends StatelessWidget {
               Icon(icon, color: color, size: 32),
               const SizedBox(height: 8),
               Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ==================== 辅助组件：尿布一键速记按钮 ====================
+
+class _DiaperQuickButton extends StatelessWidget {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  final bool selected;
+  final Color activeColor;
+  final VoidCallback onTap;
+
+  const _DiaperQuickButton({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+    required this.selected,
+    required this.activeColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final borderColor = selected ? activeColor : theme.colorScheme.outlineVariant;
+    final bg = selected
+        ? activeColor.withOpacity(0.12)
+        : theme.colorScheme.surfaceContainerLow;
+
+    return Material(
+      color: bg,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: borderColor, width: selected ? 2 : 1),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                selected ? activeIcon : icon,
+                color: selected ? activeColor : theme.colorScheme.onSurfaceVariant,
+                size: 28,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  color: selected ? activeColor : theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
             ],
           ),
         ),

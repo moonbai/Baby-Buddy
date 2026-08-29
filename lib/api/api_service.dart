@@ -287,6 +287,28 @@ class ApiService {
     }
   }
 
+  /// 校验 API Key / Token 是否有效
+  ///
+  /// 用户粘贴来自 Baby Buddy 服务器的 API Key 时，通过请求轻量接口 /api/children 验证。
+  /// 返回 true 表示鉴权通过，false 表示 401/403；其他错误抛异常。
+  static Future<bool> verifyToken() async {
+    try {
+      final resp = await dio.get('/api/children/', queryParameters: {'limit': 1});
+      final status = resp.statusCode;
+      if (status == 401 || status == 403) return false;
+      return status != null && status >= 200 && status < 300;
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      if (status == 401 || status == 403) return false;
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        throw Exception('无法连接到服务器，请检查地址和网络');
+      }
+      if (status == 404) throw Exception('服务器地址错误，请确认URL正确');
+      throw Exception('验证失败: ${e.message}');
+    }
+  }
+
   // ======================================================================
   // Children
   // ======================================================================
@@ -658,6 +680,28 @@ class ApiService {
 
   static Future<void> updateTimer(int id, Map<String, dynamic> data) =>
       _updateItem('/api/timers/', id, data, '更新计时器');
+
+  /// 重建 3 个默认计时器（与 Baby Buddy 官方原版 Android App 行为一致）
+  ///
+  /// 流程：列出当前 child 的所有 timer → 全部 stop（删除）→ 创建默认的
+  /// Feeding / Sleep / TummyTime 三个新计时器。用于快速从杂乱的 quick-timers
+  /// 状态恢复成干净的默认布局。
+  static Future<void> recreateDefaultTimers(int childId) async {
+    final existing = await getTimers(childId: childId, limit: 200);
+    // 并行清理（互不依赖）
+    await Future.wait(
+      existing
+          .map((t) => t['id'])
+          .whereType<int>()
+          .map((id) => stopTimer(id).catchError((_) => null)),
+    );
+    // 创建 3 个默认 timer
+    await Future.wait([
+      addTimer(childId: childId, name: 'Feeding'),
+      addTimer(childId: childId, name: 'Sleep'),
+      addTimer(childId: childId, name: 'Tummy Time'),
+    ]);
+  }
 
   // ======================================================================
   // Tags
